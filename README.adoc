@@ -1,28 +1,42 @@
-== Sallet Visor
-Sallet is an extreme Secure Wallet system created by Sziller and Team at sziller.eu.
-Visor is the online module of the Sallet universe. It is a low-level, advanced Bitcoin wallet, handling public data only. It features:
+= Sallet Visor: Extreme Secure Wallet Module
 
-- coin selection,
-- direct node support,
-- 3rd party node selection,
-- token management,
-- ... and is the gateway to the airgapped HEAD unit.
+Sallet Visor is a module within the Sallet ecosystem, developed by Sziller and Team at _sziller.eu_.
+It serves as an advanced, low-level Bitcoin wallet that exclusively manages public data.
+Designed with extreme security in mind, Visor offers:
 
-Sallet is made-up of separate modules with some even physically isolated.
+== Key Features
+- Coin selection
+- Direct node support
+- 3rd party node selection
+- Token management
+- ... and is the gateway to the airgapped HEAD unit
 
-Sallet VISOR:: Present module - is a world-facing online Secure Wallet App, handling public only data.
-Saller HEAD:: an air-gapped, transaction signer and key manager unit, running on a dedicated, fully self-custodied hardware.
-Sallet NECK:: a Token handling module to issue and keep track of your self-issued Tokens, NFT's. 
+== Platform Support
+Visor is currently under development for Linux OS and Android Mobiles,
+with plans to expand to other platforms in the future.
 
-=== Platforms
-Visor is currently developed for Linux OS and Android Mobiles. We intend to widen the range of platforms later.
+== Security Design
+Sallet prioritizes robust security measures against potential threats.
+The development approach explicitly assumes an environment compromised not only by malicious software but also
+by zero-day compromised hardware. To address security concerns, Sallet employs:
 
-=== Design considerations
-Sallet is designed with extreme security in mind. The basic assumption of the development is:
-----
-Our computer is infested with malicious software, with 0-day built-in spyware. We do not have the experties to filter or defend against software or hardware related attacks.
-----
+=== Air-Gapped Setup
+- Private keys are generated and stored offline.
+- Signatures are generated in an airgapped environment.
+- Custom-made analogue entropy is an option for users.
 
+=== Data Handling
+- Transactions are signed on the airgapped HEAD device.
+- Data transfer from the HEAD unit to the world-facing VISOR module occurs via analogue means.
+- Zero-knowledge tests regularly check for irregularities caused by malicious code or compromised hardware components.
 
-Any actions requiring 
-Visor does not handle Entropy
+== Modules in Sallet
+- *Sallet Visor:* Handles public-only data, serving as a world-facing online Secure Wallet App.
+- *Sallet Head:* An air-gapped unit for transaction signing and key management on dedicated, fully self-custodied hardware.
+- *Sallet Neck:* Manages token issuance and tracking for self-issued Tokens and NFTs.
+
+[TIP]
+====
+This design ensures a resilient security setup, even in an adversarial environment, by strictly controlling data flow
+and continuously verifying against threats posed by software vulnerabilities and potentially compromised hardware elements.
+====
