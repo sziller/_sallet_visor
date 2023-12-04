@@ -1,10 +1,14 @@
 == Sallet Visor
 Sallet is an extreme Secure Wallet system created by Sziller and Team at sziller.eu.
+Visor is the online module of the Sallet universe. It is a low-level, advanced Bitcoin wallet, handling public data only. It features:
+- coin selection,
+- direct node support,
+- 3rd party node selection,
+- token management,
+- ... and is the gateway to the airgapped HEAD unit.
 
-Online module of the Sallet universe. Low level, advanced Bitcoin wallet handling public data only. Coin selection, token management, gateway to an airgapped HEAD unit.
+Sallet is made-up of separate modules with some even physically isolated.
 
-Sallet is made up of modules partially even physically separated:
-
-- Sallet VISOR: is a world-facing online Secure Wallet App
-- Saller HEAD: is an air-gapped, analogue accessible key manager and transaction signer running on dedicated fully self-custodied hardware.
-- Sallet NECK: a Token handling module to issue and keep track of your self-issued Tokens, NFT's
+Sallet VISOR:: Present module - is a world-facing online Secure Wallet App, handling public only data.
+Saller HEAD:: an air-gapped, transaction signer and key manager unit, running on a dedicated, fully self-custodied hardware.
+Sallet NECK:: a Token handling module to issue and keep track of your self-issued Tokens, NFT's. 
