@@ -1,0 +1,1007 @@
+#: kivy 2.1.0
+## ------------------------------------------------------------------
+## - Font settings in general. All used fonts to be defined here    -
+## ------------------------------------------------------------------
+#:set fn_balance_btc "./fonts/Ubuntu-B.ttf"
+#:set fs_balance_btc 80
+
+#:set fn_balance_sat "./fonts/Ubuntu-BI.ttf"
+#:set fs_balance_sat 40
+
+#:set fn_title "./fonts/Ubuntu-B.ttf"
+#:set fs_title 20
+
+#:set fn_subtitle "./fonts/Ubuntu-C.ttf"
+#:set fs_subtitle 18
+
+#:set fn_subsubtitle "./fonts/Ubuntu-B.ttf"
+#:set fs_subsubtitle 14
+
+#:set fn_button "./fonts/Ubuntu-BI.ttf"
+#:set fs_button 14
+
+#:set fn_button_small "./fonts/Ubuntu-BI.ttf"
+#:set fs_button_small 11
+
+#:set fn_button_big "./fonts/Ubuntu-B.ttf"
+#:set fs_button_big 25
+
+#:set fn_text "./fonts/Ubuntu-C.ttf"
+#:set fs_text 12
+
+#:set fn_text_normal "./fonts/Ubuntu-C.ttf"
+#:set fs_text_normal 13
+
+#:set fn_text_large "./fonts/Ubuntu-C.ttf"
+#:set fs_text_large 15
+
+#:set fn_data "./fonts/Ubuntu-LI.ttf"
+#:set fs_data 12
+
+## ------------------------------------------------------------------
+## - Colors to be used globally:                                    -
+## ------------------------------------------------------------------
+
+#:set clr_wallet_bck (0.137, 0.145, 0.2, 1)
+#:set clr_transp_bck (0.231, 0.929, 0.455, 0.05)
+
+#:set clr_white (1, 1, 1, 1)
+#:set clr_orange (1, 0.6, .125, 1)
+#:set clr_yellow (1, 0.77, 0.1, 1)
+#:set clr_green (0.231, 0.929, 0.455, 1)
+#:set clr_blue (0, 0.39, 1, 1)
+
+
+#:set clr_title_txt (0, 0, 0, 1)
+#:set clr_area_bck (0.186, 0.186, 0.186, 1)
+#:set clr_light_bck (0.486, 0.486, 0.486, 1)
+
+#:set clr_button_bck (0.486, 0.486, 0.486, 0.2)
+#:set clr_button_txt (0.937, 0.482, 0.133, 1)
+#:set clr_buttonbig_bck (0.486, 0.486, 0.486, 1)
+#:set clr_buttonbig_txt (1, 1, 1, 1)
+
+
+## ------------------------------------------------------------------
+## - Filelinks to be used globally:                                 -
+## ------------------------------------------------------------------
+#:set rootpath_cli "./test_cli" ## .cli file directory
+#:set rootpath_stl "./test_stl" ## .stl file directory
+
+#:set background_image "./images/MinimalIndustrySurf-02STRWP.jpg"
+#:set defaultim "./images/HandCandleWP.jpg"
+
+#:set logo_img "./icons/Sallet-VISOR_Icon.png"
+##:set logo_img "./icons/cr/logo.png"
+#:set qr_in_title_img "./images/qr_in_title.png"
+
+## ------------------------------------------------------------------
+## transitions imported for screenchanges:
+## ------------------------------------------------------------------
+#:import NoTransition kivy.uix.screenmanager.NoTransition
+## -----------------------------------------------------------------------------
+#:import CardTransition kivy.uix.screenmanager.CardTransition
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+#:import FallOutTransition kivy.uix.screenmanager.FallOutTransition
+#:import RiseInTransition kivy.uix.screenmanager.RiseInTransition
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition
+#:import SwapTransition kivy.uix.screenmanager.SwapTransition
+#:import WipeTransition kivy.uix.screenmanager.WipeTransition
+
+## ----------------------------------------------------------------------
+## Root Widget definition: Screenhandler                        START   -
+## ----------------------------------------------------------------------
+
+<SalletScreenManager@ScreenManager>:
+    transition: NoTransition()
+    ## transition: CardTransition(duration=0.2)
+    ## transition: FadeTransition(duration=0.05)
+    ## transition: FallOutTransition(duration=0.05)    # opposites v
+    ## transition: RiseInTransition(duration=0.08)     # opposites ^
+    ## transition: SlideTransition(duration=0.2)
+    ## transition: SwapTransition(duration=.5)
+    ## transition: WipeTransition()
+
+SalletScreenManager:
+    id: "ThisIsYourROOTWidget"
+    canvas.before:
+        Color:
+            rgba: clr_wallet_bck
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            # source: background_image
+    ScreenIntro:
+        id: screen_intro
+    ScreenBtc:
+        id: screen_btc
+    ScreenNft:
+        id: screen_nft
+    ScreenTx:
+        id: screen_tx
+    ScreenQrOut:
+        id: screen_qr_out
+    ScreenQrIn:
+        id: screen_qr_in
+    ScreenSend:
+        id: screen_send
+
+
+## ----------------------------------------------------------------------
+## Root Widget definition: Screenhandler                        ENDED   -
+## ----------------------------------------------------------------------
+
+#:set rel_size_t_line (1, 0.075)
+#:set rel_size_navbar (1, 0.05)
+#:set rel_size_oparea (1, 0.8)
+#:set rel_size_ribbon (1, 0.075)
+#:set size_list (0.4, 1)
+#:set size_list_left (0.6, 1)
+#:set n_features 7
+
+<InScreenWindow@BoxLayout>:
+    orientation: "vertical"
+
+
+<ScreenIntro@Screen>:
+    name: "screen_intro"
+    InScreenWindow:  ## Screen class is a widget, it is not filled up automatically
+        TitleLine:
+            id: screen_intro_titleline
+            size_hint: rel_size_t_line                      ##  0.05
+            display_title: "Sallet VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar                      ##  0.05    < 0.10
+        OpAreaIntro:
+            size_hint: rel_size_oparea                       ##  0.9     < 1
+            id: oparea_intro
+        Ribbon:
+            id: ribbon_intro
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Introduction"
+            image_source: logo_img
+
+<ScreenBtc@Screen>:
+    name: "screen_btc"
+    InScreenWindow:
+        TitleLine:
+            id: screen_btc_titleline
+            size_hint: rel_size_t_line
+            display_title: "Sallet - Security wallet - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaBtc:
+            size_hint: rel_size_oparea
+            id: oparea_btc
+        Ribbon:
+            id: ribbon_btc
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Sallet"
+            image_source: logo_img
+
+<ScreenNft@Screen>:
+    name: "screen_nft"
+    InScreenWindow:
+        TitleLine:
+            id: screen_nft_titleline
+            size_hint: rel_size_t_line
+            display_title: "Sallet tokens - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaNft:
+            size_hint: rel_size_oparea
+            id: oparea_nft
+        Ribbon:
+            id: ribbon_nft
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Tokens"
+            image_source: logo_img
+
+<ScreenTx@Screen>:
+    name: "screen_tx"
+    InScreenWindow:
+        TitleLine:
+            id: screen_tx_titleline
+            size_hint: rel_size_t_line
+            display_title: "Transaction manager - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaTx:
+            size_hint: rel_size_oparea
+            id: oparea_tx
+        Ribbon:
+            id: ribbon_tx
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Transactions"
+            image_source: logo_img
+
+<ScreenQrIn@Screen>:
+    name: "screen_qr_in"
+    InScreenWindow:  ## Screen class is a widget, it is not filled up automatically
+        TitleLine:
+            id: screen_qr_in_titleline
+            size_hint: rel_size_t_line
+            display_title: "QR code reader - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaQrIn:
+            size_hint: rel_size_oparea
+            id: oparea_qrin
+        Ribbon:
+            id: ribbon_qr_in
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: QR in"
+            image_source: logo_img
+
+<ScreenQrOut@Screen>:
+    name: "screen_qr_out"
+    InScreenWindow:
+        TitleLine:
+            id: screen_qr_out_titleline
+            size_hint: rel_size_t_line
+            display_title: "Display QR codes - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        QRdisplay:
+            size_hint: rel_size_oparea
+            id: oparea_qrout
+        Ribbon:
+            id: ribbon_qr_out
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: QR in"
+            image_source: logo_img
+
+<ScreenSend@Screen>:
+    name: "screen_send"
+    InScreenWindow:
+        TitleLine:
+            id: screen_send_titleline
+            size_hint: rel_size_t_line
+            display_title: "Broadcaster - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaSend:
+            size_hint: rel_size_oparea
+            id: oparea_send
+        Ribbon:
+            id: ribbon_send
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Broadcast"
+            image_source: logo_img
+
+<TitleLine@BoxLayout>:
+    display_title: "default"
+    orientation: "horizontal"
+    ScreenTitleLabel:
+        font_name: fn_title
+        font_size: fs_title
+        text: root.display_title
+
+<NavBar@BoxLayout>:
+    id: navbar
+    orientation: "horizontal"
+    size_hint: 1, 0.05
+    ButtonScreenNav:
+        id: button_nav_intro
+        target: "screen_intro"
+        text: "Welcome"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_btc
+        target: "screen_btc"
+        text: "Sallet"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_nft
+        target: "screen_nft"
+        text: "NFT"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_tx
+        target: "screen_tx"
+        text: "TX"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_qr_out
+        target: "screen_qr_out"
+        text: "sign"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_qr_in
+        target: "screen_qr_in"
+        text: "scan"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_send
+        target: "screen_send"
+        text: "send"
+        on_release: root.on_release_navbar(self)
+        
+<Ribbon@BoxLayout>:
+    text_ribbon: "N/A"
+    image_source: None
+    orientation: "horizontal"
+    LabelSubSubTitle:
+        size_hint: 0.95, 1
+        text: root.text_ribbon
+    Image:
+        keep_ratio: True
+        allow_stretch: False
+        size_hint: 0.05, 1
+        source: root.image_source
+
+<OperationAreaBox@BoxLayout>:
+    spacing: 5
+    padding: 20, 0, 20, 0
+
+<OpAreaIntro@OperationAreaBox>:
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+        LabelWelcomeTitle:
+            size_hint: 1, 0.1
+            id: lbl_welcome_title
+            text: "Welcome"
+        LabelWelcomeIntro:
+            size_hint: 1, 0.20
+            id: lbl_welcome_intro
+            text: "Welcome"
+        BoxLayout:
+            size_hint: 1, 0.6
+            orientation: "vertical"
+            LabelRowList:
+                id: lbl_row_list_01
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Coin selection"
+                text_lbl: "Manage and select your own UTXO's optimize at your will, hide your metadata, collect dust, organize coinjoins"
+            LabelRowList:
+                id: lbl_row_list_02
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Tiny digital footprint"
+                text_lbl: "Generate and keep your Keys off-line"
+            LabelRowList:
+                id: lbl_row_list_03
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Hidden entropy"
+                text_lbl: "Sign your transactions off-line"
+            LabelRowList:
+                id: lbl_row_list_04
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Privacy"
+                text_lbl: "Isolate sensitive data from the digital world"
+            LabelRowList:
+                id: lbl_row_list_05
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Asset management"
+                text_lbl: "Issuance and manage your own tokens. Leverage the only immutable ledger of the Planet."
+            LabelRowList:
+                id: lbl_row_list_06
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Node selection"
+                text_lbl: "Customize the way you publish your transaction"
+            LabelRowList:
+                id: lbl_row_list_07
+                size_hint: 1, 1/n_features
+                size_lbl: size_list_left
+                size_btn: size_list
+                text_btn: "Control"
+                text_lbl: "Program your money: Construct custom made locking-scripts."
+        BoxLayout:
+            size_hint: 1, 0.1
+            LabelPH:
+                size_hint: 1, 1
+            
+<OpAreaBtc@OperationAreaBox>:
+    orientation: "vertical"
+    LabelBalanceBtc:
+        id: lbl_balance_btc
+        size_hint: 1, 0.3
+        text: "0.0 btc"
+    LabelBalanceSat:
+        id: lbl_balance_sat
+        size_hint: 1, 0.5
+        text: "0 sats"
+    BoxLayout:
+        size_hint: 1, 0.2
+        orientation: "horizontal"
+        padding: 10, 10, 10, 10
+        spacing: 10
+        ButtonBig:
+            size_hint: 0.5, 1
+            text: "send"
+        ButtonBig:
+            size_hint: 0.5, 1
+            text: "receive"
+
+<LabelRowList@BoxLayout>:
+    text_btn: "N/A"
+    text_lbl: "N/A"
+    size_btn: (1, 0.5)
+    size_lbl: (1, 0.5)
+    orientation: "horizontal"
+    size_hint: 1, 1/n_features
+                ## canvas.before:
+                ##     Color:
+                ##         rgba: clr_transp_bck
+                ##     Rectangle:
+                ##         pos: self.pos
+                ##         size: self.size
+    ButtonInfo: ## LabelWelcomeList:
+        size_hint: root.size_btn
+        text: root.text_btn
+    LabelWelcomeListLeft:
+        size_hint: root.size_lbl
+        text: root.text_lbl
+            
+<OpAreaNft@OperationAreaBox>:
+    orientation: "vertical"
+    LabelBalanceBtc:
+        size_hint: 1, 0.3
+        text: "0.0 tox"
+    LabelBalanceSat:
+        size_hint: 1, 0.5
+        text: "0 sats"
+    BoxLayout:
+        size_hint: 1, 0.2
+        orientation: "horizontal"
+        padding: 10, 10, 10, 10
+        spacing: 10
+        ButtonBig:
+            size_hint: 0.5, 1
+            text: "send"
+        ButtonBig:
+            size_hint: 0.5, 1
+            text: "receive"
+ 
+<OpAreaTx@OperationAreaBox>:
+    orientation: "vertical"
+    BoxLayout:
+        size_hint: 1, 0.4
+        orientation: "vertical"
+        LabelSubTitle:
+            size_hint: 1, 0.1
+            text: "Input section"
+        LabelSubSubTitle:
+            size_hint: 1, 0.05
+            text: "UTXO set to select from:"
+        BoxLayout:
+            size_hint: 1, 0.4
+            orientation: "horizontal"
+            ScrollViewSallet:
+                id: scrlv_utxo
+                size_hint: 0.8, 1
+                UtxoDisplayArea:
+                    height: max(self.minimum_height, scrlv_utxo.height)
+                    id: utxo_display_area
+                    size_hint: 1, None
+            LabelTitle:
+                id: lbl_utxo_balance
+                size_hint: 0.2, 1
+                text: "utxo balance"
+        LabelSubSubTitle:
+            size_hint: 1, 0.05
+            text: "Inputs selected:"
+        BoxLayout:
+            size_hint: 1, 0.4
+            orientation: "horizontal"
+            ScrollViewSallet:
+                id: scrlv_inputs
+                size_hint: 0.8, 1
+                InputDisplayArea:
+                    height: max(self.minimum_height, scrlv_inputs.height)
+                    id: input_display_area
+                    size_hint: 1, None
+            LabelTitle:
+                id: lbl_input_balance
+                size_hint: 0.2, 1
+                text: "input balance"
+    BoxLayout:
+        size_hint: 1, 0.4
+        orientation: "vertical"
+        LabelSubTitle:
+            size_hint: 1, 0.05
+            text: "Output section"
+        BoxLayout:
+            size_hint: 1, 0.95
+            orientation: "horizontal"
+            ScrollViewSallet:
+                id: scrlv_inputs
+                size_hint: 0.8, 1
+                OutputDisplayArea:
+                    height: max(self.minimum_height, scrlv_inputs.height)
+                    id: output_display_area
+                    size_hint: 1, None
+            LabelTitle:
+                id: lbl_output_balance
+                size_hint: 0.2, 1
+                text: "output balance"
+    BoxLayout:
+        size_hint: 1, 0.15
+        orientation: "vertical"
+        LabelSubTitle:
+            size_hint: 1, 0.05
+            text: "Fee section"
+        BoxLayout:
+            size_hint: 1, 0.10
+            orientation: "horizontal"
+            LabelTitle:
+                size_hint: 0.8, 1
+                text: "current miner fee:"
+            LabelTitle:
+                id: lbl_fee_balance
+                size_hint: 0.2, 1
+                text: "output balance"
+    ButtonBig:
+        size_hint: 1, 0.05
+        text: "Create TX"
+        on_release: root.create_tx()
+            
+<OpAreaQrIn@OperationAreaBox>:
+    BoxLayout:
+        padding: 20
+        spacing: 20
+        orientation: "vertical"
+        LabelInfo:
+            id: labelinfo
+            size_hint: 1, 0.05
+            text: "This is your QR reader - HEAD"
+        ScrollViewSallet:
+            id: scrlv
+            size_hint: 1, 0.15
+            LabelInfo:
+                height: scrlv.height
+                size_hint: 1, 2
+                id: str_2b_conv
+                text: ""
+        ScanArea:
+            id: scan_area
+            size_hint: 1, 0.6
+        ButtonToggleScan:
+            id: button_convert
+            size_hint: 1, 0.2
+            disabled: False
+            target: "screen_proc"
+            text: "scan - ON"
+            on_state: root.on_toggle_scan_qr(self)
+
+<ScanArea@BoxLayout>:
+    Image:
+        id: img
+        keep_ratio: True
+        allow_stretch: False
+        source: qr_in_title_img
+            
+<OpAreaQrOut@OperationAreaBox>:
+    BoxLayout:
+        padding: 20
+        spacing: 20
+        orientation: "vertical"
+        LabelInfo:
+            id: labelinfo
+            size_hint: 1, 0.15
+            text: "This is your QR reader"
+
+<OpAreaSend@OperationAreaBox>:
+    orientation: "vertical"
+    LabelBalanceBtc:
+        size_hint: 1, 0.2
+        text: "0.0 btc"
+    LabelBalanceSat:
+        size_hint: 1, 0.2
+        text: "0 sats"
+    BoxLayout:
+        size_hint: 1, 0.2
+        orientation: "horizontal"
+        NodeLine:
+            id: used_node_data
+            node_alias: "node_alias"
+            node_address: "ip:port"
+    BoxLayout:
+        size_hint: 1, 0.2
+        orientation: "horizontal"
+        ScrollViewSallet:
+            id: scrlv_node
+            size_hint: 1, 1
+            NodeDisplayArea:
+                height: max(self.minimum_height, scrlv_node.height)
+                id: node_display_area
+                size_hint: 1, None
+    BoxLayout:
+        size_hint: 1, 0.2
+        orientation: "horizontal"
+        padding: 10, 10, 10, 10
+        spacing: 10
+        ButtonBig:
+            size_hint: 0.7, 1
+            text: "broadcast"
+        ButtonBig:
+            size_hint: 0.3, 1
+            text: "cancel"
+
+<NodeLine@BoxLayout>:
+    node_alias: "node_alias"
+    node_address: "node_address"
+    LabelTitle:
+        size_hint: 0.5, 1
+        text: root.node_alias
+    LabelTitle:
+        size_hint: 0.5, 1
+        text: root.node_address
+
+<QRdisplay@BoxLayout>:
+    orientation: "horizontal"
+    ButtonSallet:
+        id: browse_qr_prev
+        add: -1
+        size_hint: 0.05, 0.2
+        pos_hint: {"center_y": 0.5}
+        text: "<"
+        on_release: root.on_buttonclick_qr_browse(self)
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 0.9, 1
+        LabelTitle:
+            id: qr_count
+            size_hint: 1, 0.1
+            text: "TopLayout"
+        QRPlotField:
+            id: qr_plot_layout
+            size_hint: 1, 0.9
+
+    ButtonSallet:
+        id: browse_qr_next
+        add: 1
+        size_hint: 0.05, 0.2
+        pos_hint: {"center_y": 0.5}
+        text: ">"
+        on_release: root.on_buttonclick_qr_browse(self)
+
+
+#   ---------------------------------------------------------------------
+#   - Button:                                                   START   -
+#   ---------------------------------------------------------------------
+
+<ButtonSallet@Button>:
+    ## background_normal: ''
+    ## background_down: ''
+    background_color: clr_button_bck
+    
+ 
+<ButtonInfo@ButtonSallet>:
+    font_size: fs_subtitle
+    font_name: fn_subtitle
+    text_size: self.size
+    halign: 'left'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+    padding: 20, 0, 0, 0
+    color: clr_orange
+    
+<ButtonListitem@ButtonSallet>:
+    font_name: fn_button_small
+    font_size: fs_button_small
+    
+<ButtonFull@Button>:
+    background_color: clr_transp_bck
+    font_name: fn_button_big
+    font_size: fs_button_big
+    color: clr_button_txt
+    halign: 'center'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+
+<ButtonBig@ButtonSallet>:
+    font_name: fn_button_big
+    font_size: fs_button_big
+    background_color: clr_orange
+    color: clr_orange
+    
+<ToggleButtonSallet@ToggleButton>:
+    background_color: clr_button_bck
+    color: clr_button_txt
+
+<ButtonScreenNav@ButtonSallet>:
+    background_color: clr_orange
+    color: clr_orange
+    font_name: fn_button
+    font_size: fs_button
+    target: ""
+    disabled: True
+    text_size: self.size
+    padding: (2, 2)
+    text: "ToggleButton"
+    halign: 'center'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+
+<ButtonEntropySel@ButtonSallet>:
+    size_hint: 0.1, 1
+    font_name: fn_button_small
+    font_size: fs_button_small
+    target: ""
+    text_size: self.size
+    padding: (2, 2)
+    text: "ToggleButton"
+    halign: 'center'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+
+<ButtonToggleScan@ToggleButtonSallet>:
+    font_name: fn_button
+    font_size: fs_button
+    size_hint: 0.5, None # 0.15
+    height: dp(60)
+    pos_hint: {"center_x": .5, "center_y": .5}
+    
+#   ---------------------------------------------------------------------
+#   - Button:                                                   ENDED   -
+#   --------------------------------------------------------------------
+
+#   ---------------------------------------------------------------------
+#   - Label:                                                    START   -
+#   ---------------------------------------------------------------------
+
+<LabelListitem@Label>:
+
+<LabelInfo@Label>:
+    canvas.before:
+        Color:
+            rgba: clr_light_bck
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    color: 0, 0, 0, 1
+    font_size: fs_subsubtitle
+    font_name: fn_subsubtitle
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+
+<LabelBalanceBtc@Label>:
+    color: clr_blue
+    font_size: fs_balance_btc
+    font_name: fn_balance_btc
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+
+<LabelBalanceSat@Label>:
+    color: clr_title_txt
+    font_size: fs_balance_sat
+    font_name: fn_balance_sat
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'top'  ## middle, top, bottom
+
+<LabelWelcomeTitle@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_blue
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_orange
+    font_size: fs_title
+    font_name: fn_title
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+
+<LabelWelcomeIntro@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_blue
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_white
+    font_size: fs_text_normal
+    font_name: fn_text_normal
+    text_size: self.size
+    line_height: 1.1
+    ## padding: 80, 0, 80, 0 ##left, top, right, bottom
+    halign: 'justify'  ## center, right, left, justify
+    valign: 'top'  ## middle, top, bottom
+
+<LabelWelcomeList@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_blue
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_white
+    font_size: fs_subtitle
+    font_name: fn_subtitle
+    text_size: self.size
+    ## padding: 80, 0, 10, 0 ##left, top, right, bottom
+    line_height: 1.2
+    halign: 'left'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+
+<LabelWelcomeListLeft@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_blue
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_white
+    font_size: fs_text_normal
+    font_name: fn_text_normal
+    text_size: self.size
+    padding: 10, 0, 10, 0 ##left, top, right, bottom
+    line_height: 1.0
+    halign: 'justify'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+
+<LabelWelcomeListRight@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_blue
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_white
+    font_size: fs_subtitle
+    font_name: fn_subtitle
+    text_size: self.size
+    ## padding: 80, 0, 10, 0 ##left, top, right, bottom
+    line_height: 1.2
+    halign: 'right'  ## center, right, left
+    valign: 'top'  ## middle, top, bottom
+
+<LabelTitle@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_light_bck
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_blue
+    font_size: fs_title
+    font_name: fn_title
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+
+<LabelSubTitle@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_wallet_bck
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_green
+    font_size: fs_subtitle
+    font_name: fn_subtitle
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+    
+<LabelSubSubTitle@Label>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_wallet_bck
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_button_txt
+    font_size: fs_subsubtitle
+    font_name: fn_subsubtitle
+    text_size: self.size
+    halign: 'center'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+
+<LabelLead@LabelListitem>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_wallet_bck
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_green
+    font_size: fs_text
+    font_name: fn_text
+    text_size: self.size
+    halign: 'left'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+
+<LabelEnd@LabelListitem>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_wallet_bck
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    color: clr_yellow
+    font_size: fs_subsubtitle
+    font_name: fn_subsubtitle
+    text_size: self.size
+    halign: 'right'  ## center, right, left
+    valign: 'center'  ## middle, top, bottom
+    
+<ScreenTitleLabel@Label>:
+    font_size: fs_title
+    font_name: fn_title
+    color: clr_orange
+
+<LabelPH@Label>:
+
+#   ---------------------------------------------------------------------
+#   - Label:                                                    ENDED   -
+#   ---------------------------------------------------------------------
+
+#   ---------------------------------------------------------------------
+#   - ScrollView:                                               START   -
+#   ---------------------------------------------------------------------
+
+<ScrollViewSallet@ScrollView>:
+    canvas.before:
+        Color:
+            rgba: clr_transp_bck
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    scroll_timeout: 2000
+    scroll_distance: 10
+    bar_margin:3
+    bar_width: 15
+    bar_color: 255/255, 143/255, 5/255, 0.8 
+    bar_inactive_color: 255/255, 143/255, 5/255, 0.8 
+    do_scroll_x:False
+    scroll_type:['bars','content']
+
+#   ---------------------------------------------------------------------
+#   - ScrollView:                                               ENDED   -
+#   ---------------------------------------------------------------------
+
+#   ---------------------------------------------------------------------
+#   - TextInput::                                               START   -
+#   ---------------------------------------------------------------------
+
+<TextInputSallet@TextInput>:
+    font_name: fn_data
+    font_size: fs_data
+    text_size: self.size
+    line_height: 40
+    multiline: False
+    focus: False
+    hint_text: "enter value"
+    padding: (2, 2)
+    foreground_color: (1,1,1,1)
+    background_color: (1,1,1,0.2)
+    cursor_color: (1,1,1,1)
+    halign: 'left'  ## center, right, left
+    valign: 'middle'  ## middle, top, bottom
+
+#   ---------------------------------------------------------------------
+#   - TextInput::                                               ENDED   -
+#   ---------------------------------------------------------------------
+
+<UtxoRowObj@BoxLayout>:
+    size_hint: 1, None
+    height: 20
+
+<OutputRowObj@BoxLayout>:
+    size_hint: 1, None
+    height: 20
+
+<NodeRowObj@BoxLayout>:
+    size_hint: 1, None
+    height: 30

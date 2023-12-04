@@ -1,0 +1,7 @@
+kivy  # pip3 install kivy
+opencv-python  # pip3 install opencv-python
+# sudo apt-get install zbar-tools
+pyzbar  # pip3 install pyzbar
+python-dotenv  # pip3 install python-dotenv
+sqlalchemy  # pip3 install sqlalchemy
+pyaml  # pip3 install pyaml
