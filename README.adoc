@@ -1,6 +1,6 @@
 = Sallet Visor: Extreme Secure Wallet Module
 
-Sallet Visor is a module within the Sallet ecosystem, developed by Sziller and Team at _sziller.eu_.
+*Sallet Visor* is a module within the *Sallet system*, developed by Sziller and Team at _sziller.eu_.
 It serves as an advanced, low-level Bitcoin wallet that exclusively manages public data.
 Designed with extreme security in mind, Visor offers:
 
@@ -30,7 +30,7 @@ by zero-day compromised hardware. To address security concerns, Sallet employs:
 - Data transfer from the HEAD unit to the world-facing VISOR module occurs via analogue means.
 - Zero-knowledge tests regularly check for irregularities caused by malicious code or compromised hardware components.
 
-== Modules in Sallet
+== Modules in the *Sallet system*
 - *Sallet Visor:* Handles public-only data, serving as a world-facing online Secure Wallet App.
 - *Sallet Head:* An air-gapped unit for transaction signing and key management on dedicated, fully self-custodied hardware.
 - *Sallet Neck:* Manages token issuance and tracking for self-issued Tokens and NFTs.
