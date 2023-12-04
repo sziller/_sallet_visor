@@ -12,3 +12,6 @@ Sallet is made-up of separate modules with some even physically isolated.
 Sallet VISOR:: Present module - is a world-facing online Secure Wallet App, handling public only data.
 Saller HEAD:: an air-gapped, transaction signer and key manager unit, running on a dedicated, fully self-custodied hardware.
 Sallet NECK:: a Token handling module to issue and keep track of your self-issued Tokens, NFT's. 
+
+=== Platforms
+Visor is currently developed for Linux OS and Android Mobiles. We intend to widen the range of platforms later.
