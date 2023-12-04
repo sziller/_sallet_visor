@@ -1,6 +1,7 @@
 == Sallet Visor
 Sallet is an extreme Secure Wallet system created by Sziller and Team at sziller.eu.
 Visor is the online module of the Sallet universe. It is a low-level, advanced Bitcoin wallet, handling public data only. It features:
+
 - coin selection,
 - direct node support,
 - 3rd party node selection,
@@ -15,3 +16,13 @@ Sallet NECK:: a Token handling module to issue and keep track of your self-issue
 
 === Platforms
 Visor is currently developed for Linux OS and Android Mobiles. We intend to widen the range of platforms later.
+
+=== Design considerations
+Sallet is designed with extreme security in mind. The basic assumption of the development is:
+----
+Our computer is infested with malicious software, with 0-day built-in spyware. We do not have the experties to filter or defend against software or hardware related attacks.
+----
+
+
+Any actions requiring 
+Visor does not handle Entropy
