@@ -1,6 +1,8 @@
-== _sallet_visor
-Online module of the Sallet universe. Low level, advanced Bitcoin wallet handling public data only. Coin selection, token management, gateway to an airgapped HEAD unit.
+== Sallet Visor
 Sallet is an extreme Secure Wallet system created by Sziller and Team at sziller.eu.
+
+Online module of the Sallet universe. Low level, advanced Bitcoin wallet handling public data only. Coin selection, token management, gateway to an airgapped HEAD unit.
+
 Sallet is made up of modules partially even physically separated:
 
 - Sallet VISOR: is a world-facing online Secure Wallet App
