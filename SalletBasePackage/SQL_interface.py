@@ -1,74 +1,8 @@
 """
-[cols ="1n, 1n, 1n, 5, f, a, a, a", frame=none, grid=none, options="header"]
-.Table 1. - <records>
-|=======================================================================================================================
-|hash_hxstr |hash_bytes |time   |user   |email  |mrkl_root_list |mrkl_addr_list |rights |locations          |docdata
-|text       |blob       |real   |text   |       |text           |text           |integer|text               |text
-|-----------|-----------|-------|-------|-------|-------------- |---------------|-------|-------------------|-----------
-|H101       |b'101      |12.23  |<id_u> |usr_u@.|[root1]        |[241]          |1017   |["./drive", url..] |{json 101}
-|H102       |b'102      |22.21  |<id_f> |usr_f@.|[root1]        |[012]          |38     |["./drive", url..] |
-|H103       |b'103      |30.12  |<id_z> |usr_z@.|[]             |[103]          |38     |[]                 |
-|H104       |b'104      |12.44  |<id_b> |usr_b@.|[root2]        |[002]          |485    |                   |{json 104}
-|=======================================================================================================================
-
-Once hashed, a file meta-data is stored in <records>:
-Hash: is the actual hash of the file
-time: timeA - when hash first hits CR - actual request time
-MerkleAddress: list of integers, where data is stored - leafnumber. Empty list for "not assigned" - assignment timing ?
-MerkleRoot: the root address of the tree data is put into: "" for "not assigned" - assignment timing ???
-read-rights: well....
-
-
-[cols ="1n, 5", frame=none, grid=none, options="header"]
-.Table 2. - <merkletrees>
-|================================================================================
-|root_hxstr |time       |proofdata                              |txid
-|text       |real       |text                                   |text
-|-----------|-----------|---------------------------------------|----------------
-|root1      |322.344    |[...entire addressed tree Nr.1...]     |
-|root2      |411.302    |[...entire addressed tree Nr.2...]     |
-|================================================================================
-
-.Table 3. - <users>
-|=========================================================================================
-|uuid       |usr_ln     |usr_fn |pubkex |email_active   |email_archive_list |authorization
-|TEXT       |TEXT       |TEXT   |TEXT   |TEXT           |TEXT               |INTEGER
-|-----------|-----------|-------|-------|---------------|-------------------|-------------
-|2e427f..   |Doe        |John   |pubK   |DoeJ@home.com  |[johny@gmail.com]  |24
-|409f33..   |Brad       |Freedom|pubK   |Bradley@       |                   |127
-|=========================================================================================
-
-.Table 4. - <documents>
-|======================================================
-|hash_hxstr     |locations          |docdata
-|text           |text               |text
-|---------------|-------------------|------------------
-|               |["./drive", url..] |{json 101}
-|               |["./drive", url..] |
-|               |[]                 |
-|               |                   |{json 104}
-|======================================================
-
-.Table 5. - scheduledtasks
-|=========================
-|id_hash    |style  |task_name  |init_at    |repeat
-|text       |int    |str        |int        |int 
-|-----------|-------|-----------|-----------|------
-|<hxstr>    |0      |merkletreebuild    |1700654    |86400
-
 SQLAlchemy powered DB handling test, and production code.
 We hope to swap DB handling while using Alchemy from SQLite to PostgreSQL.
 Present implementation servers both current SQLight and all development steps along the way.
-
-This is the
-CREATE TABLE IF NOT EXISTS users (uuid TEXT PRIMARY KEY,
-                                  usr_ln TEXT,
-                                  usr_fn TEXT,
-                                  email_list TEXT,
-                                  time REAL,
-                                  authorization INTEGER,
-                                  pubkey TEXT
-                                  );
+by Sziller
 """
 import os
 import random as rnd

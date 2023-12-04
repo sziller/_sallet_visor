@@ -194,8 +194,6 @@ class QRPlotField(BoxLayout):
         self.add_widget(self.displayed_qr)
 
 
-
-
 class ScanArea(BoxLayout):
     def __init__(self, **kwargs):
         super(ScanArea, self).__init__(**kwargs)
