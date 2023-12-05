@@ -6,6 +6,7 @@ import sys
 import dotenv
 import inspect
 import cv2
+import pyqrcode
 from kivy.app import App  # necessary for the App class
 from kivy.uix.screenmanager import ScreenManager
 from kivy.core.window import Window
@@ -58,43 +59,49 @@ class SalletScreenManager(ScreenManager):
                 "seq": 0,
                 'inst': "button_nav_intro",
                 'down': ["button_nav_intro"],
-                'normal': ["button_nav_btc", "button_nav_nft", "button_nav_tx",
+                'normal': ["button_nav_btc", "button_nav_nft", "button_nav_mint", "button_nav_tx",
                            "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
             "screen_btc": {
                 "seq": 1,
                 'inst': 'button_nav_btc',
                 'down': ['button_nav_btc'],
-                'normal': ["button_nav_intro", "button_nav_nft", "button_nav_tx",
+                'normal': ["button_nav_intro", "button_nav_nft", "button_nav_mint", "button_nav_tx",
                            "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
             "screen_nft": {
                 "seq": 2,
                 'inst': 'button_nav_nft',
                 'down': ['button_nav_nft'],
-                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_tx",
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_mint", "button_nav_tx",
+                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
+            "screen_mint": {
+                "seq": 3,
+                'inst': 'button_nav_mint',
+                'down': ['button_nav_mint'],
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_tx",
                            "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
             "screen_tx":  {
-                "seq": 3,
+                "seq": 4,
                 'inst': 'button_nav_tx',
                 'down': ['button_nav_tx'],
-                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft",
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
                            "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
             "screen_qr_out": {
-                "seq": 4,
+                "seq": 5,
                 'inst': 'button_nav_qr_out',
                 'down': ['button_nav_qr_out'],
-                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft",
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
                            "button_nav_tx", "button_nav_qr_in", "button_nav_send"]},
             "screen_qr_in": {
-                "seq": 5,
+                "seq": 6,
                 'inst': 'button_nav_qr_in',
                 'down': ['button_nav_qr_in'],
-                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft",
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
                            "button_nav_tx", "button_nav_qr_out", "button_nav_send"]},
             "screen_send": {
-                "seq": 6,
+                "seq": 7,
                 'inst': "button_nav_send",
                 'down': ["button_nav_send"],
-                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft",
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
                            "button_nav_tx", "button_nav_qr_out", "button_nav_qr_in"]}
             }
 
@@ -311,6 +318,19 @@ class OpAreaNft (OperationAreaBox):
         Default method to run right after startup (or whenever defaulting back to initial state is necessary)
         ========================================================================================== by Sziller ==="""
         print("Started: {}".format(self.ccn))
+
+
+class OpAreaMint(OperationAreaBox):
+    ccn = inspect.currentframe().f_code.co_name
+
+    def __init__(self, **kwargs):
+        super(OpAreaMint, self).__init__(**kwargs)
+
+    def on_init(self):
+        """=== Method name: on_init ====================================================================================
+        Default method to run right after startup (or whenever defaulting back to initial state is necessary)
+        ========================================================================================== by Sziller ==="""
+        print("Started: {}".format(self.ccn))
         
         
 class OpAreaSend(OperationAreaBox):
@@ -386,6 +406,9 @@ class OpAreaTx(OperationAreaBox):
         self.actual_fee = 0
         # --- Balance components --------------------------------------------   Balance components  -   ENDED   -
         # self.on_init()
+        self.actualTX_hxstr: str                        = ""
+        self.qr_code_list: list                         = []
+        self.qr_path_list: list                         = []
     
     def on_init(self):
         """=== Method name: on_init ====================================================================================
@@ -401,14 +424,46 @@ class OpAreaTx(OperationAreaBox):
         self.update_fee()
         self.display_all()
         
-        App.get_running_app().root.ids.screen_btc.ids.oparea_btc.ids.lbl_balance_btc.text =\
-            str(self.utxomanager.balance_total)
+        App.get_running_app().root.ids.screen_btc.ids.oparea_btc.ids.lbl_balance_btc.text = \
+            "{:>6.4} btc".format(self.utxomanager.balance_total)
+        App.get_running_app().root.ids.screen_btc.ids.oparea_btc.ids.lbl_balance_sat.text = \
+            "{:>10} sat".format(int(self.utxomanager.balance_total * (10**8)))
     
     def create_tx(self):
         """=== Method name: create_tx ==================================================================================
         ========================================================================================== by Sziller ==="""
         print("PUSHED: <create_tx>")
-    
+        self.actualTX_hxstr = "placeholder of the TX - in serialized format - just produced as a RAW TRANSACTION"
+        
+    def generate_qr_from_tx(self):
+        """=== Function name: generate_qr_from_tx ====================================================================
+        Method creates a (list of) QR code(s)...
+        ========================================================================================== by Sziller ==="""
+        self.qr_code_list = []
+        self.qr_path_list = []
+        for str_seg in self.stringlist_tobe_converted:
+            self.qr_code_list.append(pyqrcode.create(content=str_seg, mode="binary"))
+
+        for c, qr in enumerate(self.qr_code_list):
+            print(qr.terminal())
+            target = "./qrcodes/qr_{:0>3}.png".format(c+1)
+            self.qr_path_list.append(target)
+            qr.png(target, scale=10)
+
+        if len(self.qr_code_list) > 1:
+            App.get_running_app().root.ids.screen_disp.ids.opareaintro.ids.browse_qr_prev.disabled = False
+            App.get_running_app().root.ids.screen_disp.ids.opareaintro.ids.browse_qr_next.disabled = False
+            msg = "Displaying QR nr.{:>3}:\n{}".format(1, self.qr_path_list[0])
+        else:
+            msg = "Read your QR code below:"
+
+        App.get_running_app().root.ids.screen_disp.ids.opareaintro.ids.labelinfo.text = msg
+        App.get_running_app().root.ids.screen_disp.ids.opareaintro.ids.qr_plot_layout.source = self.qr_path_list[0]
+        App.get_running_app().root.ids.screen_disp.ids.opareaintro.ids.qr_plot_layout.reload()
+
+        App.get_running_app().change_screen(screen_name="screen_disp", screen_direction="right")
+        App.get_running_app().root.ids.screen_disp.ids.opareaintro.qr_path_list = self.qr_path_list
+
     def add_new_output_rowobj(self):
         """=== Method name: add_new_output_rowobj ======================================================================
         Method checks number of outputs, and adds a new OutputRowObj to the output_display_area.

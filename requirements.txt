@@ -5,3 +5,4 @@ pyzbar  # pip3 install pyzbar
 python-dotenv  # pip3 install python-dotenv
 sqlalchemy  # pip3 install sqlalchemy
 pyaml  # pip3 install pyaml
+pyqrcode  # pip3 install pyqrcode

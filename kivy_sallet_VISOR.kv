@@ -117,6 +117,8 @@ SalletScreenManager:
         id: screen_btc
     ScreenNft:
         id: screen_nft
+    ScreenMint:
+        id: screen_mint
     ScreenTx:
         id: screen_tx
     ScreenQrOut:
@@ -198,6 +200,25 @@ SalletScreenManager:
             id: ribbon_nft
             size_hint: rel_size_ribbon
             text_ribbon: "Bottom of Screen: Tokens"
+            image_source: logo_img
+
+<ScreenMint@Screen>:
+    name: "screen_mint"
+    InScreenWindow:
+        TitleLine:
+            id: screen_mint_titleline
+            size_hint: rel_size_t_line
+            display_title: "Mint NFT - VISOR"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaMint:
+            size_hint: rel_size_oparea
+            id: oparea_mint
+        Ribbon:
+            id: ribbon_mint
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Mint NFT"
             image_source: logo_img
 
 <ScreenTx@Screen>:
@@ -302,6 +323,11 @@ SalletScreenManager:
         id: button_nav_nft
         target: "screen_nft"
         text: "NFT"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_mint
+        target: "screen_mint"
+        text: "Mint"
         on_release: root.on_release_navbar(self)
     ButtonScreenNav:
         id: button_nav_tx
@@ -471,6 +497,27 @@ SalletScreenManager:
         ButtonBig:
             size_hint: 0.5, 1
             text: "receive"
+
+<OpAreaMint@OperationAreaBox>:
+    orientation: "vertical"
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+        LabelWelcomeTitle:
+            size_hint: 1, 0.1
+            id: lbl_mint_title
+            text: "Let's mint"
+        LabelWelcomeIntro:
+            size_hint: 1, 0.20
+            id: lbl_mint_intro
+            text: "how go we go about it?"
+        BoxLayout:
+            size_hint: 1, 0.6
+            orientation: "vertical"
+        BoxLayout:
+            size_hint: 1, 0.1
+            LabelPH:
+                size_hint: 1, 1
  
 <OpAreaTx@OperationAreaBox>:
     orientation: "vertical"
