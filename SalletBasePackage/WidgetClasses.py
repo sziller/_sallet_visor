@@ -2,11 +2,13 @@
 
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 
-from SalletBasePackage.models import Utxo, Node
+from SalletBasePackage.models import Utxo
+from SalletNodePackage.BitcoinNodeObject import Node
 
 
 class LabelTitle(Label):
@@ -74,6 +76,11 @@ class ButtonInfo(ButtonSallet):
     pass
 
 
+class ToggleButtonSallet(ToggleButton):
+    """custom ToggleButton"""
+    pass
+
+
 class TextInputSallet(TextInput):
     """custom TextInput"""
     pass
@@ -116,39 +123,42 @@ class OutputRowObj(BoxLayout):
         self.script: str = ""
 
         self.lbl_n = LabelLead(text=str(self.n))
-        self.lbl_pl1 = LabelLead(text="style")
-        self.txtinp_addr = TextInputSallet()
-        self.txtinp_addr.bind(text=self.read_addr)
-        self.txtinp_value = TextInputSallet()
-        self.txtinp_value.bind(text=self.read_value)
-
-        self.btn_del = ButtonListitem(text="-")
-        self.btn_del.bind(on_release=self.del_this_row)
-        self.btn_add = ButtonListitem(text="+")
-        self.btn_add.bind(on_release=self.add_next_row)
-        self.lbl_scrollbar = LabelEnd()
-
         self.lbl_n.size_hint = (0.1, 1)
         self.add_widget(self.lbl_n)
 
-        self.lbl_pl1.size_hint = (0.2, 1)
+        self.lbl_pl1 = LabelLead(text="style")
+        self.lbl_pl1.size_hint = (0.15, 1)
         self.add_widget(self.lbl_pl1)
 
+        self.txtinp_addr = TextInputSallet()
+        self.txtinp_addr.bind(text=self.read_addr)
         self.txtinp_addr.size_hint = (0.2, 1)
         self.add_widget(self.txtinp_addr)
 
+        self.txtinp_value = TextInputSallet()
+        self.txtinp_value.bind(text=self.read_value)
         self.txtinp_value.size_hint = (0.2, 1)
         self.add_widget(self.txtinp_value)
 
         if n:
+            self.btn_del = ButtonListitem(text="-")
+            self.btn_del.bind(on_release=self.del_this_row)
             self.btn_del.size_hint = (0.05, 1)
             self.add_widget(self.btn_del)
+            self.btn_add = ButtonListitem(text="+")
             self.btn_add.size_hint = (0.05, 1)
-
         else:
+            self.btn_add = ButtonListitem(text="+")
             self.btn_add.size_hint = (0.1, 1)
+        self.btn_add.bind(on_release=self.add_next_row)
         self.add_widget(self.btn_add)
-
+        
+        self.tgl_nft = ToggleButtonSallet(text="nft")
+        self.tgl_nft.size_hint = (0.05, 1)
+        self.tgl_nft.bind(on_release=self.toggle_nft_use)
+        self.add_widget(self.tgl_nft)
+        
+        self.lbl_scrollbar = LabelEnd()
         self.lbl_scrollbar.size_hint = (0.2, 1)
         self.add_widget(self.lbl_scrollbar)
         
@@ -194,7 +204,11 @@ class OutputRowObj(BoxLayout):
         print(value)
 
     # Local methods to be called on generated Widget's action - redirecting to higher hierarchy object  -   ENDED   -
-
+    
+    def toggle_nft_use(self, inst, **kwargs):
+        print("yeeeee......")
+        print(inst.state)
+    
 
 class NodeRowObj(BoxLayout):
     orientation = "horizontal"
@@ -248,24 +262,26 @@ class UtxoRowObj(BoxLayout):
         self.field: str = field  # 'utxo' or 'input'
 
         self.lbl_id = LabelLead(text=self.uxto_id_obj.__repr__())
+        self.lbl_id.size_hint = (0.75, 1)
+        self.add_widget(self.lbl_id)
+        
         self.lbl_value = LabelEnd(text="{}".format(self.value))
+        self.lbl_value.size_hint = (0.175, 1)
+        self.add_widget(self.lbl_value)
+        
         if self.field == 'utxo':
-            self.btn_mark = ButtonListitem(text="use")
+            self.btn_mark   = ButtonListitem(text="use")
             self.btn_mark.bind(on_release=self.use_this_utxo)
-
+            self.btn_mark.size_hint = (0.05, 1)
+            self.add_widget(self.btn_mark)
         elif self.field == 'input':
             self.btn_mark = ButtonListitem(text="del")
             self.btn_mark.bind(on_release=self.remove_this_utxo)
-
+            self.btn_mark.size_hint = (0.05, 1)
+            self.add_widget(self.btn_mark)
+            
         self.lbl_scrollbar = LabelEnd()
-
-        self.lbl_id.size_hint = (0.75, 1)
-        self.lbl_value.size_hint = (0.175, 1)
-        self.btn_mark.size_hint = (0.05, 1)
         self.lbl_scrollbar.size_hint = (0.025, 1)
-        self.add_widget(self.lbl_id)
-        self.add_widget(self.lbl_value)
-        self.add_widget(self.btn_mark)
         self.add_widget(self.lbl_scrollbar)
 
     def use_this_utxo(self, inst=None, **kwargs):
@@ -273,7 +289,8 @@ class UtxoRowObj(BoxLayout):
         print("Button pushed: <use_this_utxo>")
         self.disabled = True
         self.parent_op_area.use_utxo_as_input(self.uxto_id_obj)
-
+        
+        
     def remove_this_utxo(self, inst=None, **kwargs):
         """=== Method to use actual utxo as Transaction input"""
         print("Button pushed: <remove_this_utxo>")

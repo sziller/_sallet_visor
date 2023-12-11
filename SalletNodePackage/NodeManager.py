@@ -8,7 +8,7 @@ import inspect
 import logging
 from dotenv import load_dotenv
 from SalletBasePackage import SQL_interface as sqla, models
-
+from SalletNodePackage.BitcoinNodeObject import Node
 lg = logging.getLogger(__name__)
 lg.info("START     : {:>85} <<<".format('NodeManager.py'))
 
@@ -43,6 +43,7 @@ class NODEManager:
         self.node_list = sqla.QUERY_entire_table(ordered_by="owner",
                                                  db_table=os.getenv("DB_ID_TABLE_NODE"),
                                                  session_in=self.session_in)
+        
     def extract_node_set_dict(self):
         """=== Method name: extract_node_set_dict ======================================================================
         Once self.node_list is given, this script creates a dictionary from it.
@@ -51,4 +52,4 @@ class NODEManager:
         for node in self.node_list:
             alias = node['alias']
             print(node)
-            self.node_obj_dict[alias] = models.Node.construct(node)
+            self.node_obj_dict[alias] = Node.construct(node)

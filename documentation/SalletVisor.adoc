@@ -1,0 +1,86 @@
+[[Sallet:Visor]]
+== *Sallet VISOR*: Secure Wallet Module
+image::Sallet-VISOR_Icon.png["Icon", 100, 100, float="left",align="center"]
+*Sallet Visor* is a module within the *Sallet system*, developed by Sziller and Team at _sziller.eu_.
+The actual wallet application of the Sallet ecosystem.
+You can take a look at current development under: https://www.github.com/sziller/_sallet_visor
+*VISOR* serves as an advanced, low-level Bitcoin wallet that exclusively manages public data.
+Designed with extreme security in mind, *VISOR* offers:
+
+=== Featureset
+- Coin selection
+- Direct node support
+- 3rd party node selection
+- NFT minting
+- Token management
+- ... and is the gateway to the airgapped HEAD unit
+
+=== Platform Support
+*VISOR* is currently under development for Linux OS and Android Mobiles,
+with plans to expand to other platforms in the future.
+It can be used both as Mobile App or Desktop software.
+
+=== Functionality
+Heres a page-by-page summary of what *VISOR* does.
+
+[.float-group]
+==== Intro
+image::VISOR_Intro.png["Welcome screen", 400, 666, float="right", align="center"]
+--
+The welcome screen serves as an introduction,
+explaining high-level features and offering an interactive tutorial-like guide.
+--
+
+[.float-group]
+==== BTC onchain wallet
+image::VISOR_Wallet.png[title="Bitcoin wallet", 400, 666, float="right", align="center"]
+--
+User-friendly interface for quick Bitcoin transactions. Ideal for users not delving into complex details.
+--
+
+[.float-group]
+==== NFT wallet
+image::VISOR_Nft.png[title="NFT wallet", 400, 666, float="right",align="center"]
+--
+An easy-to-use interface for managing NFTs, catering to everyday NFT users. Enables tracking and trading of NFTs.
+--
+
+[.float-group]
+==== NFT minting
+image::VISOR_Mint.png[title="NFT minting", 400, 666, float="right",align="center"]
+--
+Easy to handle NFT Mint. Facilitates the creation and issuance of NFTs,
+offering customization options and multiple creations in a single transaction.
+--
+
+[.float-group]
+==== Coin selection
+image::VISOR_TX.png[title="custom tailored Transactions", 400, 666, float="right",align="center"]
+--
+Advanced, flexible transaction creation interface, allowing meticulous customization for high-value and/or
+complex transactions.
+--
+
+[.float-group]
+==== QR scanner
+image::VISOR_QRin.png[title="analogue incoming data", 400, 666, float="right",align="center"]
+--
+Enables reading analogue data from the HEAD unit, accepting signed transaction QR representations.
+--
+
+[.float-group]
+==== QR code display
+image::VISOR_QRout.png[title="displaying QR coded output data", 400, 666, float="right",align="center"]
+--
+Displays analogue data for the isolated HEAD unit, including unsigned or partially signed transactions and software
+updates.
+--
+
+[.float-group]
+==== Broadcast
+image::VISOR_Send.png[title="Node management", 400, 666, float="right",align="center"]
+--
+Setup page for Transaction broadcasting,
+offering privacy-centric options and various node selections for transaction dissemination.
+--
+

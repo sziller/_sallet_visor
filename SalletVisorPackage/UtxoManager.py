@@ -10,7 +10,7 @@ import inspect
 from dotenv import load_dotenv
 from SalletBasePackage import SQL_interface as sqla, models
 from SalletBasePackage import units
-from SalletNodePackage import BitcoinNode_Actions as Node
+from SalletNodePackage import BitcoinNodeObject as BtcNode
 
 lg = logging.getLogger(__name__)
 lg.info("START     : {:>85} <<<".format('UtxoManager.py'))
@@ -143,10 +143,9 @@ class UTXOManager:
         self.utxo_set = []
         for utxoid in self.utxo_set_dict:
             utxo_id_obj = models.UtxoId.construct_from_string(utxoid)
-            tx_data = Node.nodeop_getrawtransaction(tx_hash=utxo_id_obj.txid,
-                                                    verbose=1,
-                                                    is_rpc=True,
-                                                    dotenv_path="./.env")
+            node_used = BtcNode.Node(is_rpc=True, dotenv_path=self.dotenv_path)
+            tx_data = node_used.nodeop_getrawtransaction(tx_hash=utxo_id_obj.txid,
+                                                         verbose=1)
             current_bc_utxo = tx_data['vout'][utxo_id_obj.n]
             current_bc_utxo["utxo_id"] = "{}".format(utxo_id_obj)
             current_bc_utxo["txid"] = "{}".format(utxo_id_obj.txid)

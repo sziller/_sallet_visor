@@ -88,6 +88,7 @@ class ScriptPubKey:
 
 class PrivateKey:
     ccn = inspect.currentframe().f_code.co_name
+    
     def __init__(self, owner: str, kind: int):
         self.hxstr: str     = ""
         self.owner: str     = owner
@@ -97,53 +98,12 @@ class PrivateKey:
 
 class MerkleDerived(PrivateKey):
     ccn = inspect.currentframe().f_code.co_name
+    
     def __init__(self, owner, root_hxstr, kind: int = 1, deriv_nr: int = 0):
         super().__init__(owner, kind)
         self.root_hxstr: str = root_hxstr
         self.deriv_nr: int  = deriv_nr
 
-
-class Node:
-    """=== Class name: Node ============================================================================================
-    Simple mostly static datacollection of Nodes, your system is in contact with.
-    ============================================================================================== by Sziller ==="""
-    ccn = inspect.currentframe().f_code.co_name
-    
-    def __init__(self,
-                 alias: str,
-                 owner: str,
-                 ip: str,
-                 port: int,
-                 features: dict = {},
-                 desc: str = ""):
-        self.alias: str     = alias
-        self.owner: str     = owner
-        self.ip: str        = ip
-        self.port: int      = port
-        self.features: dict = features
-        self.desc: str      = desc
-
-    def __repr__(self):
-        return "{:>15}:{} - {} / {}".format(self.ip, self.port, self.alias, self.owner, )
-
-    @classmethod
-    def construct(cls, d_in):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
-        @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        return cls(**d_in)
-
-    @classmethod
-    def construct_from_string(cls, str_in):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param str_in: str - format data to instantiate new object
-        @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        pass
-    
 
 if __name__ == "__main__":
     pass

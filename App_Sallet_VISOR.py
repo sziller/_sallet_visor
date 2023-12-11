@@ -18,10 +18,14 @@ from kivy.graphics.texture import Texture
 from SalletBasePackage.WidgetClasses import *
 from SalletBasePackage import SQL_interface as sql, models
 from SalletBasePackage import units
+from SalletBasePackage import DataDisplay as DaDi
 from SalletNodePackage import NodeManager as NodeMan
+from SalletNodePackage import BitcoinNodeObject as BtcNode
 from SalletVisorPackage import UtxoManager as UtxoMan
 
 from kivy.config import Config
+
+DOTENV_PATH = "./.env"
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
@@ -60,49 +64,55 @@ class SalletScreenManager(ScreenManager):
                 'inst': "button_nav_intro",
                 'down': ["button_nav_intro"],
                 'normal': ["button_nav_btc", "button_nav_nft", "button_nav_mint", "button_nav_tx",
-                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
+                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send", "button_nav_browse"]},
             "screen_btc": {
                 "seq": 1,
                 'inst': 'button_nav_btc',
                 'down': ['button_nav_btc'],
                 'normal': ["button_nav_intro", "button_nav_nft", "button_nav_mint", "button_nav_tx",
-                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
+                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send", "button_nav_browse"]},
             "screen_nft": {
                 "seq": 2,
                 'inst': 'button_nav_nft',
                 'down': ['button_nav_nft'],
                 'normal': ["button_nav_intro", "button_nav_btc", "button_nav_mint", "button_nav_tx",
-                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
+                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send", "button_nav_browse"]},
             "screen_mint": {
                 "seq": 3,
                 'inst': 'button_nav_mint',
                 'down': ['button_nav_mint'],
                 'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_tx",
-                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
+                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send", "button_nav_browse"]},
             "screen_tx":  {
                 "seq": 4,
                 'inst': 'button_nav_tx',
                 'down': ['button_nav_tx'],
                 'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
-                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]},
+                           "button_nav_qr_out", "button_nav_qr_in", "button_nav_send", "button_nav_browse"]},
             "screen_qr_out": {
                 "seq": 5,
                 'inst': 'button_nav_qr_out',
                 'down': ['button_nav_qr_out'],
                 'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
-                           "button_nav_tx", "button_nav_qr_in", "button_nav_send"]},
+                           "button_nav_tx", "button_nav_qr_in", "button_nav_send", "button_nav_browse"]},
             "screen_qr_in": {
                 "seq": 6,
                 'inst': 'button_nav_qr_in',
                 'down': ['button_nav_qr_in'],
                 'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
-                           "button_nav_tx", "button_nav_qr_out", "button_nav_send"]},
+                           "button_nav_tx", "button_nav_qr_out", "button_nav_send", "button_nav_browse"]},
             "screen_send": {
                 "seq": 7,
                 'inst': "button_nav_send",
                 'down': ["button_nav_send"],
                 'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
-                           "button_nav_tx", "button_nav_qr_out", "button_nav_qr_in"]}
+                           "button_nav_tx", "button_nav_qr_out", "button_nav_qr_in", "button_nav_browse"]},
+            "screen_browse": {
+                "seq": 8,
+                'inst': "button_nav_browse",
+                'down': ["button_nav_browse"],
+                'normal': ["button_nav_intro", "button_nav_btc", "button_nav_nft", "button_nav_mint",
+                           "button_nav_tx", "button_nav_qr_out", "button_nav_qr_in", "button_nav_send"]}
             }
 
 
@@ -331,6 +341,44 @@ class OpAreaMint(OperationAreaBox):
         Default method to run right after startup (or whenever defaulting back to initial state is necessary)
         ========================================================================================== by Sziller ==="""
         print("Started: {}".format(self.ccn))
+
+
+class OpAreaBrowse(OperationAreaBox):
+    ccn = inspect.currentframe().f_code.co_name
+
+    def __init__(self, **kwargs):
+        super(OpAreaBrowse, self).__init__(**kwargs)
+        self.memorized_btn_color: tuple or None = None  # workaround to gain button color from .kv
+        self.memorized_btn_text: str or None = None  # workaround to gain button text from .kv
+
+    def on_init(self):
+        """=== Method name: on_init ====================================================================================
+        Default method to run right after startup (or whenever defaulting back to initial state is necessary)
+        ========================================================================================== by Sziller ==="""
+        pass
+        
+    def on_textupdate_textinput(self, inst):
+        pass
+        # print(inst.text)
+    
+    def on_buttonclick_browse(self, inst):
+        if self.memorized_btn_color is None:
+            self.memorized_btn_color = inst.background_color
+            self.memorized_btn_text = inst.text
+        
+        tx_id = self.ids.txtinp_browse.text
+        print(tx_id)
+        returned_json = {}
+        
+        try:
+            returned_json = App.get_running_app().actual_node_object.nodeop_getrawtransaction(tx_hash=tx_id, verbose=1)
+            inst.background_color = self.memorized_btn_color
+            inst.text = self.memorized_btn_text
+        except:
+            inst.background_color = (1, 0, 0)
+            inst.text = "INVALID"
+        data_as_displayed = DaDi.rec_data_plotter(data=returned_json, string="")
+        self.ids.lbl_tx_info.text = data_as_displayed
         
         
 class OpAreaSend(OperationAreaBox):
@@ -340,7 +388,7 @@ class OpAreaSend(OperationAreaBox):
         super(OpAreaSend, self).__init__(**kwargs)
         self.nodemanager: NodeMan.NODEManager or None   = None
         self.node_rowobj_dict_in_opareasend: dict = {}
-        self.used_node: models.Node or None = None
+        self.used_node: BtcNode.Node or None = None
         
     def on_init(self):
         """=== Method name: on_init ====================================================================================
@@ -378,7 +426,7 @@ class OpAreaSend(OperationAreaBox):
             self.ids.node_display_area.add_widget(newline)  # only add if key does not exist!!!
             self.node_rowobj_dict_in_opareasend[alias] = newline
         
-    def use_node(self, node: models.Node):
+    def use_node(self, node: BtcNode.Node):
         """=== Method name: use_node ===================================================================================
         ========================================================================================== by Sziller ==="""
         print(node)
@@ -602,6 +650,7 @@ class OpAreaTx(OperationAreaBox):
         self.display_total_input()
         self.display_fee()
         
+    
     def disregard_utxo_as_input(self, utxo_id_obj: models.UtxoId):  # redesign UtxoId source
         """=== Method name: ============================================================================
         ========================================================================================== by Sziller ==="""
@@ -639,11 +688,12 @@ class SalletVISOR(App):
     Instantiation should - contrary to what is used on the net - happen by assigning it to a variable name.
     :param window_content:
     ============================================================================================== by Sziller ==="""
-    def __init__(self, window_content: str, csm: float = 1.0):
+    def __init__(self, window_content: str, csm: float = 1.0, dotenv_path="./.env"):
         super(SalletVISOR, self).__init__()
-        self.window_content = window_content
+        self.window_content = window_content 
         self.content_size_multiplier = csm
-        self.title = "Sallet - Visor: your transaction handler"
+        self.dotenv_path: str = dotenv_path
+        self.title: str = "Sallet - Visor: your transaction handler"
         self.balance_onchain_sats: int = 0
         # --- Database settings ---------------------------------------------   - Database settings -   START   -
         self.db_session = sql.createSession(db_path=os.getenv("DB_PATH_VISOR"),
@@ -655,6 +705,9 @@ class SalletVISOR(App):
         self.unit_use: str          = os.getenv("UNIT_USE")
         self.display_format: str    = os.getenv("DISPLAY_FORMAT") + " " + os.getenv("UNIT_USE")
         # --- Bitcoin related settings ----------------------------------  Bitcoin related settings -   ENDED   -
+        # --- Node related settings -------------------------------------  Node related settings    -   START   -
+        self.actual_node_object: BtcNode.Node or None = None
+        # --- Node related settings -------------------------------------  Node related settings    -   START   -
 
     def change_screen(self, screen_name, screen_direction="left"):
         """=== Method name: change_screen ==============================================================================
@@ -694,6 +747,9 @@ class SalletVISOR(App):
         self.root.ids.screen_intro.ids.oparea_intro.ids.lbl_welcome_title.text = WELCOME_TITLE
         self.root.ids.screen_intro.ids.oparea_intro.ids.lbl_welcome_intro.text = WELCOME_TXT
         # --- Filling in large text-fields of Labels                                            ENDED   -
+        # --- Setting default Node                                                              START   -
+        self.actual_node_object = BtcNode.Node(is_rpc=True, dotenv_path=self.dotenv_path)
+        # --- Setting default Node                                                              ENDED   -
 
         
 if __name__ == "__main__":
@@ -714,7 +770,7 @@ if __name__ == "__main__":
                         5: {'fullscreen': False, 'size': (1200, 1200)}  # Large square
                         }
 
-    dotenv.load_dotenv()
+    dotenv.load_dotenv(DOTENV_PATH)
     style_code = int(os.getenv("SCREENMODE_VISOR"))
 
     Window.fullscreen = display_settings[style_code]['fullscreen']
@@ -728,7 +784,7 @@ if __name__ == "__main__":
         content = Builder.load_file("kivy_sallet_VISOR.kv")
 
     # Create an instance of the SalletVISOR app with loaded content and a content size multiplier.
-    application = SalletVISOR(window_content=content, csm=1)
+    application = SalletVISOR(window_content=content, csm=1, dotenv_path=DOTENV_PATH)
 
     # Run the Kivy application with defined settings.
     application.run()

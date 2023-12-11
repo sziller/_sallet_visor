@@ -8,7 +8,7 @@ of issued tokens. While offering means to trace the entirety of their issued NFT
 over their NFT ecosystem.
 
 === Modules in the *Sallet system*
-- *Sallet Visor* - Handles public-only data, serving as a world-facing online Secure Wallet App.
+- *<<Sallet:Visor>>* - Handles public-only data, serving as a world-facing online Secure Wallet App.
 - *Sallet Head* - An air-gapped unit for transaction signing and key management on dedicated, fully self-custodied
 hardware.
 - *Sallet Neck* - (as of now part of Visor) Manages token issuance and tracking for self-issued Tokens and NFTs.
@@ -39,23 +39,3 @@ Utilizing Kivy, our framework enables effortless customization of layout, colors
 Developers unfamiliar with Python can easily redesign the app by manipulating the .ky file, akin to styling with CSS. 
 This flexibility extends to saving multiple layouts within the app, offering a seamless choice at program launch.
 Additionally, this streamlined process encompasses whitelabeling tasks.
-
-== *Sallet VISOR*: Secure Wallet Module
-*Sallet Visor* is a module within the *Sallet system*, developed by Sziller and Team at _sziller.eu_.
-The actual wallet application of the Sallet ecosystem.
-You can take a look at current development under: https://www.github.com/sziller/_sallet_visor
-*VISOR* serves as an advanced, low-level Bitcoin wallet that exclusively manages public data.
-Designed with extreme security in mind, *VISOR* offers:
-
-=== Featureset
-- Coin selection
-- Direct node support
-- 3rd party node selection
-- NFT minting
-- Token management
-- ... and is the gateway to the airgapped HEAD unit
-
-=== Platform Support
-*VISOR* is currently under development for Linux OS and Android Mobiles,
-with plans to expand to other platforms in the future.
-It can be used both as Mobile App or Desktop software.

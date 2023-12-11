@@ -1,0 +1,33 @@
+= Sallet
+Szilard Gabor LADANYI <szillerke@gmail.com>
+// include::.asciidoctorconfig[]
+:icons: image
+//:icons: font
+:iconsdir: ./icons
+:sectnums:
+:doctype: book
+:author: Szilard Gabor LADANYI
+:hide-uri-scheme: true
+:description: Sallet development
+//:toc: preamble
+:toc: left
+:toclevels: 3
+:toc-title: Table of contents
+:stylesheet: adoc-colony.css
+//:stylesheet: fedora.css
+//:stylesheet: clean.css
+//:stylesheet: plain.css
+//:stylesheet: dark.css
+:stylesdir: ./css
+:figure-caption:
+:imagesdir: ./images/Sallet
+
+[[TableOfContents]]
+
+*Szilard Gabor LADANYI* - 2023
+
+include::Sallet.adoc[]
+
+include::SalletVisor.adoc[]
+
+// include::SalletHead.adoc[]

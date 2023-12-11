@@ -29,11 +29,20 @@
 #:set fn_text "./fonts/Ubuntu-C.ttf"
 #:set fs_text 12
 
+#:set fn_data "./fonts/Ubuntu-LI.ttf"
+#:set fs_data 12
+
 #:set fn_text_normal "./fonts/Ubuntu-C.ttf"
 #:set fs_text_normal 13
 
+#:set fn_data_normal "./fonts/Ubuntu-LI.ttf"
+#:set fs_data_normal 13
+
 #:set fn_text_large "./fonts/Ubuntu-C.ttf"
 #:set fs_text_large 15
+
+#:set fn_data_large "./fonts/Ubuntu-C.ttf"
+#:set fs_data_large 15
 
 #:set fn_data "./fonts/Ubuntu-LI.ttf"
 #:set fs_data 12
@@ -127,6 +136,8 @@ SalletScreenManager:
         id: screen_qr_in
     ScreenSend:
         id: screen_send
+    ScreenBrowse:
+        id: screen_browse
 
 
 ## ----------------------------------------------------------------------
@@ -297,6 +308,25 @@ SalletScreenManager:
             text_ribbon: "Bottom of Screen: Broadcast"
             image_source: logo_img
 
+<ScreenBrowse@Screen>:
+    name: "screen_browse"
+    InScreenWindow:
+        TitleLine:
+            id: screen_browse_titleline
+            size_hint: rel_size_t_line
+            display_title: "Browser"
+        NavBar:
+            id: navbar
+            size_hint: rel_size_navbar
+        OpAreaBrowse:
+            size_hint: rel_size_oparea
+            id: oparea_browse
+        Ribbon:
+            id: ribbon_browse
+            size_hint: rel_size_ribbon
+            text_ribbon: "Bottom of Screen: Browser"
+            image_source: logo_img
+
 <TitleLine@BoxLayout>:
     display_title: "default"
     orientation: "horizontal"
@@ -348,6 +378,11 @@ SalletScreenManager:
         id: button_nav_send
         target: "screen_send"
         text: "send"
+        on_release: root.on_release_navbar(self)
+    ButtonScreenNav:
+        id: button_nav_browse
+        target: "screen_browse"
+        text: "browse"
         on_release: root.on_release_navbar(self)
         
 <Ribbon@BoxLayout>:
@@ -518,6 +553,38 @@ SalletScreenManager:
             size_hint: 1, 0.1
             LabelPH:
                 size_hint: 1, 1
+                
+<OpAreaBrowse@OperationAreaBox>:
+    orientation: "vertical"
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+        LabelWelcomeTitle:
+            size_hint: 1, 0.1
+            id: lbl_browse_title
+            text: "Browse"
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.05
+            TextInputSallet:
+                size_hint: 0.8, 1
+                id: txtinp_browse
+                hint_text: "Enter TX id"
+                on_text: root.on_textupdate_textinput(self)
+            ButtonSallet:
+                size_hint: 0.2, 1
+                id: btn_browse
+                text: "Find!"
+                on_release: root.on_buttonclick_browse(self)
+        ScrollViewSallet:
+            id: scrlv
+            size_hint: 1, 0.85
+            ##LabelBrowse:
+            TextInputBrowser:
+                height: scrlv.height
+                size_hint: 1, 1.1
+                id: lbl_tx_info
+                text: ""
  
 <OpAreaTx@OperationAreaBox>:
     orientation: "vertical"
@@ -819,6 +886,22 @@ SalletScreenManager:
     halign: 'center'  ## center, right, left
     valign: 'center'  ## middle, top, bottom
 
+<LabelBrowse@SelectableLabel>:
+    canvas.before:
+        Color:
+            rgba: clr_light_bck
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    padding: 5, 2, 5, 0
+    color: 0, 0, 0, 1
+    font_size: fs_text
+    font_name: fn_text
+    text_size: self.size
+    halign: 'left'  ## center, right, left
+    valign: 'top'  ## middle, top, bottom
+
+
 <LabelBalanceBtc@Label>:
     color: clr_blue
     font_size: fs_balance_btc
@@ -1008,7 +1091,7 @@ SalletScreenManager:
     scroll_timeout: 2000
     scroll_distance: 10
     bar_margin:3
-    bar_width: 15
+    bar_width: 5
     bar_color: 255/255, 143/255, 5/255, 0.8 
     bar_inactive_color: 255/255, 143/255, 5/255, 0.8 
     do_scroll_x:False
@@ -1023,19 +1106,37 @@ SalletScreenManager:
 #   ---------------------------------------------------------------------
 
 <TextInputSallet@TextInput>:
-    font_name: fn_data
-    font_size: fs_data
+    font_name: fn_data_normal
+    font_size: fs_data_normal
     text_size: self.size
     line_height: 40
     multiline: False
     focus: False
     hint_text: "enter value"
-    padding: (2, 2)
+    padding_y: [self.height / 2.0 - (self.line_height / 2.0), 0]
     foreground_color: (1,1,1,1)
     background_color: (1,1,1,0.2)
     cursor_color: (1,1,1,1)
     halign: 'left'  ## center, right, left
     valign: 'middle'  ## middle, top, bottom
+    
+<TextInputBrowser@TextInput>:
+    ## canvas.before:
+    ##     Color:
+    ##         rgba: clr_light_bck
+    ##     Rectangle:
+    ##         pos: self.pos
+    ##         size: self.size
+    padding: 5, 2, 5, 2
+    hint_text: "transaction display area"
+    ## focus: False
+    color: 0, 0, 0, 1
+    readonly: True
+    font_size: fs_text
+    font_name: fn_text
+    text_size: self.size
+    halign: 'left'  ## center, right, left
+    valign: 'top'  ## middle, top, bottom
 
 #   ---------------------------------------------------------------------
 #   - TextInput::                                               ENDED   -
