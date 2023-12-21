@@ -11,7 +11,9 @@ import time
 
 import requests as reqs
 from SalletNodePackage import RPCHost
+from SalletBasePackage.models import UtxoId
 from dotenv import load_dotenv
+
 
 
 lg = logging.getLogger(__name__)
@@ -97,8 +99,8 @@ class Node(object):
         return resp
 
     def nodeop_getblockcount(self):
-        """=== Fuction name: get_blockheight ===============================================================================
-        ============================================================================================== by Sziller ==="""
+        """=== Fuction name: get_blockheight ===========================================================================
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblockcount"
         lg.debug("running   : {}".format(cmn))
@@ -106,6 +108,19 @@ class Node(object):
         OneReq = RPCHost.RPCHost(serverURL)
         resp = OneReq.call(command)
         lg.info("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
+        lg.debug("exiting   : {}".format(cmn))
+        return resp
+    
+    def nodeop_getblock(self, block_hash: str):
+        """=== Fuction name: nodeop_getblock ===========================================================================
+        ========================================================================================== by Sziller ==="""
+        cmn = inspect.currentframe().f_code.co_name  # current method name
+        command = "getblock"
+        lg.debug("running   : {}".format(cmn))
+        serverURL = self.rpc_url()
+        OneReq = RPCHost.RPCHost(serverURL)
+        resp = OneReq.call(command, block_hash)
+        lg.info("returning : {:<30} - {:>20}:\n{}".format(cmn, command, resp))
         lg.debug("exiting   : {}".format(cmn))
         return resp
 
@@ -162,10 +177,18 @@ class Node(object):
             resp = OneReq.call("getrawtransaction", tx_hash, verbose)
         else:
             resp = False
-        lg.info("returning : {:<30} - {:>20}:\n{}".format(cmn, command, resp))
+        lg.info("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
         lg.debug("exiting   : {}".format(cmn))
         return resp
-
+    
+    def nodeop_get_tx_outpoint(self, tx_outpoint: UtxoId):
+        cmn = inspect.currentframe().f_code.co_name  # current method name
+        if self.is_rpc:
+            serverURL = self.rpc_url()
+            OneReq = RPCHost.RPCHost(url=serverURL)
+            resp = OneReq.call("getrawtransaction", tx_outpoint.txid, True)
+            return resp["vout"][tx_outpoint.n]
+            
     def nodeop_confirmations(self, tx_hash: str) -> int:
         """=== Method name: nodeop_confirmations =======================================================================
         Read and return number of blocks passed since Transaction was confirmed.
@@ -236,15 +259,22 @@ class Node(object):
 if __name__ == "__main__":
     txid = "ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360"
     txid = "7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741"
+    # coinbases
+    txid = "56f26b369c93ba1098afb14fdf213209018904bcef82114a8f019de069dc7a7b"
+    txid = "5029302f0c8c1c2ef856194ca8a7f78a7b6ba029b3a432466ba1d4ab2105aef5"
+    txid = "0b6dc7910ed25a79ab6ce12e6a0dcb991c44708580b18f223b00a4526fd10bbf"
+    txid = "9636a0d06128c89121b442ee56200a28b99350e658f4f0774db3ea64daad872a"
+    txid = "525c4eef55f597d0344345ce9439b1e7eeb72053d0682eb2c6910a4f4d695987"
     node = Node(dotenv_path="../.env")
     print(node.nodeop_getblockcount())
     print(node.check_tx_confirmation(tx_hash=txid))
     print(node.nodeop_getconnectioncount())
+    print("========================================================================================")
     tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=1)
     
-    # for _ in tx_data['vout']:
-    #     print(_)
+    for k, v in tx_data.items():
+        print(k, v)
     
-    print(tx_data['vout'][0])
+    # print(tx_data['vout'][0])
     
     # ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360

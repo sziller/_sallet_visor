@@ -493,25 +493,7 @@ SalletScreenManager:
             size_hint: 0.5, 1
             text: "receive"
 
-<LabelRowList@BoxLayout>:
-    text_btn: "N/A"
-    text_lbl: "N/A"
-    size_btn: (1, 0.5)
-    size_lbl: (1, 0.5)
-    orientation: "horizontal"
-    size_hint: 1, 1/n_features
-                ## canvas.before:
-                ##     Color:
-                ##         rgba: clr_transp_bck
-                ##     Rectangle:
-                ##         pos: self.pos
-                ##         size: self.size
-    ButtonInfo: ## LabelWelcomeList:
-        size_hint: root.size_btn
-        text: root.text_btn
-    LabelWelcomeListLeft:
-        size_hint: root.size_lbl
-        text: root.text_lbl
+
             
 <OpAreaNft@OperationAreaBox>:
     orientation: "vertical"
@@ -1130,6 +1112,7 @@ SalletScreenManager:
     padding: 5, 2, 5, 2
     hint_text: "transaction display area"
     ## focus: False
+    auto_indent: True  ### ?????
     color: 0, 0, 0, 1
     readonly: True
     font_size: fs_text
@@ -1153,3 +1136,17 @@ SalletScreenManager:
 <NodeRowObj@BoxLayout>:
     size_hint: 1, None
     height: 30
+
+<LabelRowList@BoxLayout>:
+    text_btn: "N/A"
+    text_lbl: "N/A"
+    size_btn: (1, 0.5)
+    size_lbl: (1, 0.5)
+    orientation: "horizontal"
+    size_hint: 1, 1/n_features
+    ButtonInfo: ## LabelWelcomeList:
+        size_hint: root.size_btn
+        text: root.text_btn
+    LabelWelcomeListLeft:
+        size_hint: root.size_lbl
+        text: root.text_lbl
