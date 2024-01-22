@@ -5,9 +5,9 @@ def subsidy(height: int) -> int:
     Calculating the number of satoshis created (granted to the miner as fee) in a given block (defined by height).
     
     // is division's integer part and is higher in hierarchy than >> (thus no parenthesis needed)
-    >> is bitshifting (basically division by 2) as many times as shown after simbol.
+    >> is bitshifting (basically division by 2) as many times as shown after symbol.
     (16 >> 3 meany dividing 16 by (2*2*2))
-    16 >> 3 == 16 / 2**3
+    16 >> 3 == 16 / 2**3 = 2
     
     height // 210000 returns an integer. The number of halvings since initialization of the network
     0 - 209_999         it returns 0, so initial fee is not bitshifted
@@ -16,7 +16,7 @@ def subsidy(height: int) -> int:
     :param height: integer - sequence number of given block
     :return: integer - nr. of sats awarded as fee in given block
     ========================================================================= by Casey - explained by Sziller ==="""
-    return 50 * 100_000_000 >> height // 210_000
+    return 50 * 100_000_000 >> height // 210_000  # 50: original fee, 100_000_000 to convert fee to satoshis
 
 
 # first ordinal of subsidy of block at given height
@@ -24,17 +24,37 @@ def first_ordinal(height):
     """=== Function name: first_ordinal ================================================================================
     Counting all the issued satoshis up until given block.
     Basically adding-up all subsidies till the height entered.
+    0-49, 50-99, 100-149...
+    height 3 means, we add up the subsidies of each block (_) before entered height.
+    the number of sats up to a sat equals the ordinal of that sat.
     ========================================================================= by Casey - explained by Sziller ==="""
     start = 0
-    for act_height in range(height):
-        start += subsidy(act_height)
+    for _ in range(height):  # 0 <= _ < height - never reaching height entered: so all sats BEFORE current height added.
+        start += subsidy(_)
     return start
 
 
 # assign ordinals in given block
 def assign_ordinals(block):
-    """
-    Logic, as explained by Casey: [a b] [c] [d e f] -> [a b c d] [e] ... f will be used as miner fee
+    """=== Function name: assign_ordinals ==============================================================================
+    Logic, as explained by Casey:
+    We mark each tx's outputs enclosed in brackets:
+    [a b] [c] [d e f] -> [a b c d] [e] ... f will be used as miner fee
+    Explained:
+    TX n
+    Inputs:                         Outputs:
+    [a b]                           [a b c d]
+    [c]             --->            [e]
+    [d e f]                         ... ---> f will be used as miner fee
+    
+    In a coinbase it is like:
+    Inputs: (no actual inputs)      Outputs:
+    subs.(min)                      [subs.(min) -- x-1]
+    subs.(max-1)                    [x -- y-1]
+    [f0]                            [y -- subs.(max-1), subs.(max) - fx]
+    [f1]                            [f rest]
+    [f2]
+    So outputs ordinals of 'a' to 'f' are inherited from input sordinals 'a' to 'f'
     :param block: 
     :return: 
     ========================================================================= by Casey - explained by Sziller ==="""

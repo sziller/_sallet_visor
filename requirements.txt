@@ -7,3 +7,4 @@ sqlalchemy  # pip3 install sqlalchemy
 pyaml  # pip3 install pyaml
 pyqrcode  # pip3 install pyqrcode
 bitcoinlib      # needed - bitcoin management
+requests        # needed for Node-calls

@@ -15,11 +15,11 @@ lg.info("START: {:>83} <<<".format("RPCHost.py"))
 class RPCHost(object):
     """=== Class name: RPCHost =========================================================================================
     Object translates calls into RPC commands to an address
-        =============================================================================== by Sziller & internet ==="""
+    =================================================================================== by Sziller & internet ==="""
     ccn = inspect.currentframe().f_code.co_name  # current class name
     
     def __init__(self, url: str):
-        lg.info("START: {:>85} <<<".format(self.ccn))
+        lg.debug("START: {:>85} <<<".format(self.ccn))
         self._session = requests.Session()
         self._url = url
         self._headers = {'content-type': 'application/json'}
@@ -59,3 +59,7 @@ class RPCHost(object):
             lg.critical(msg_tmp)
             raise Exception(msg_tmp)
         return response_json['result']
+
+
+if __name__ == "__main__":
+    command = "getblockhash"

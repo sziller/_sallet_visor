@@ -14,8 +14,6 @@ from SalletNodePackage import RPCHost
 from SalletBasePackage.models import UtxoId
 from dotenv import load_dotenv
 
-
-
 lg = logging.getLogger(__name__)
 lg.info("START: {:>85} <<<".format('BitcoinNodeObject.py'))
 
@@ -49,6 +47,9 @@ class Node(object):
         
     def __repr__(self):
         return "{:>15}:{} - {} / {}".format(self.ip, self.port, self.alias, self.owner, )
+
+    def __str__(self):
+        return self.__repr__()
 
     @classmethod
     def construct(cls, d_in):
@@ -94,35 +95,62 @@ class Node(object):
         serverURL = self.rpc_url()
         OneReq = RPCHost.RPCHost(serverURL)
         resp = OneReq.call(command)
-        lg.info("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
+        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
         lg.debug("exiting   : {}".format(cmn))
         return resp
 
+    def nodeop_getblockhash(self, sequence_nr: int):
+        cmn = inspect.currentframe().f_code.co_name  # current method name
+        command = "getblockhash"
+        lg.debug("running   : {}".format(cmn))
+        if self.is_rpc:
+            serverURL = self.rpc_url()
+            OneReq = RPCHost.RPCHost(serverURL)
+            blockhash = OneReq.call(command, sequence_nr)
+        else:
+            blockhash = False
+        return blockhash
+
     def nodeop_getblockcount(self):
         """=== Fuction name: get_blockheight ===========================================================================
+        Node operation returns height of newest block available at current time.
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblockcount"
         lg.debug("running   : {}".format(cmn))
-        serverURL = self.rpc_url()
-        OneReq = RPCHost.RPCHost(serverURL)
-        resp = OneReq.call(command)
-        lg.info("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
+        if self.is_rpc:
+            serverURL = self.rpc_url()
+            OneReq = RPCHost.RPCHost(serverURL)
+            actual_blockcount = OneReq.call(command)
+        else:
+            resp = reqs.get('https://blockchain.info/q/{}'.format(command))
+            try:
+                actual_blockcount: int = resp.json()
+                lg.info("BITCOIN   : current blockheight:{:>10}".format(actual_blockcount))
+            except:
+                actual_blockcount = 0
+                lg.critical("({:>2}) blockchain.info answer FAILED: https://blockchain.info/q/".format(""))
+                time.sleep(0.1)
+        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, actual_blockcount))
         lg.debug("exiting   : {}".format(cmn))
-        return resp
-    
+        return actual_blockcount
+        
     def nodeop_getblock(self, block_hash: str):
         """=== Fuction name: nodeop_getblock ===========================================================================
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblock"
         lg.debug("running   : {}".format(cmn))
-        serverURL = self.rpc_url()
-        OneReq = RPCHost.RPCHost(serverURL)
-        resp = OneReq.call(command, block_hash)
-        lg.info("returning : {:<30} - {:>20}:\n{}".format(cmn, command, resp))
-        lg.debug("exiting   : {}".format(cmn))
-        return resp
+        if self.is_rpc:
+            serverURL = self.rpc_url()
+            OneReq = RPCHost.RPCHost(serverURL)
+            resp = OneReq.call(command, block_hash)
+            lg.debug("returning : {:<30} - {:>20}:\n{}".format(cmn, command, block_hash))
+            lg.debug("exiting   : {}".format(cmn))
+            return resp
+        else:
+            resp = reqs.get("https://blockchain.info/rawblock/{}".format(block_hash))
+            return resp
 
     def check_tx_confirmation(self, tx_hash: str, limit: int = 6) -> bool:
         """=== Function name: check_tx_confirmation ========================================================================
@@ -149,7 +177,7 @@ class Node(object):
                         For RPC calls successfull broadcast returns the Transaction ID
         ============================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
-        lg.info("Node requ.: {:>16} - publish attempt...".format({True: "OWN NODE",
+        lg.debug("Node requ.: {:>16} - publish attempt...".format({True: "OWN NODE",
                                                                   False: "blockchain.info"}[self.is_rpc]))
         if self.is_rpc:
             serverURL = self.rpc_url()
@@ -174,12 +202,33 @@ class Node(object):
         if self.is_rpc:
             serverURL = self.rpc_url()
             OneReq = RPCHost.RPCHost(url=serverURL)
-            resp = OneReq.call("getrawtransaction", tx_hash, verbose)
+            method_response = OneReq.call("getrawtransaction", tx_hash, verbose)
         else:
-            resp = False
-        lg.info("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
+            if verbose:
+                request_txt = "https://blockchain.info/rawtx/{}{}".format(tx_hash, "")  # verbose response
+                resp = reqs.get(request_txt)
+                try:
+                    method_response = resp.json()
+                    lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
+                except:
+                    method_response = {}
+                    lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format("", request_txt))
+                    lg.critical("returned  : {}".format(resp))
+                    time.sleep(0.1)
+            else:
+                request_txt = "https://blockchain.info/rawtx/{}{}".format(tx_hash, "?format=hex")  # verbose response
+                resp = reqs.get(request_txt)
+                try:
+                    method_response = resp.text
+                    lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
+                except:
+                    method_response  = ""
+                    lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format("", request_txt))
+                    lg.critical("returned  : {}".format(resp))
+                    time.sleep(0.1)
+        lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
         lg.debug("exiting   : {}".format(cmn))
-        return resp
+        return method_response
     
     def nodeop_get_tx_outpoint(self, tx_outpoint: UtxoId):
         cmn = inspect.currentframe().f_code.co_name  # current method name
@@ -216,11 +265,10 @@ class Node(object):
             ping_limit = 16
     
             while not actual_blockcount or not actual_tx_data:
-    
                 resp = reqs.get('https://blockchain.info/q/{}'.format(cmd))
                 try:
                     actual_blockcount: int = resp.json()
-                    lg.info("BITCOIN   : current blockheight:{:>10}".format(actual_blockcount))
+                    lg.debug("BITCOIN   : current blockheight:{:>10}".format(actual_blockcount))
                 except:
                     actual_blockcount = 0
                     lg.critical("({:>2}) blockchain.info answer FAILED: https://blockchain.info/q/".format(ping_times))
@@ -230,7 +278,7 @@ class Node(object):
                 resp = reqs.get(request_txt)
                 try:
                     actual_tx_data: dict = resp.json()
-                    lg.info("BITCOIN   : blockchain.info about current TX:\n{}".format(actual_tx_data))
+                    lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(actual_tx_data))
                 except:
                     actual_tx_data = {}
                     lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format(ping_times, request_txt))
@@ -249,7 +297,7 @@ class Node(object):
                     confirmed = 0
             except KeyError:
                 confirmed = 0
-        lg.info("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, confirmed))
+        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, confirmed))
         lg.debug("exiting   : {}".format(cmn))
         return confirmed
 
@@ -257,24 +305,66 @@ class Node(object):
 
 
 if __name__ == "__main__":
+    import bitcoinlib
     txid = "ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360"
     txid = "7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741"
     # coinbases
-    txid = "56f26b369c93ba1098afb14fdf213209018904bcef82114a8f019de069dc7a7b"
-    txid = "5029302f0c8c1c2ef856194ca8a7f78a7b6ba029b3a432466ba1d4ab2105aef5"
-    txid = "0b6dc7910ed25a79ab6ce12e6a0dcb991c44708580b18f223b00a4526fd10bbf"
-    txid = "9636a0d06128c89121b442ee56200a28b99350e658f4f0774db3ea64daad872a"
+    # txid = "56f26b369c93ba1098afb14fdf213209018904bcef82114a8f019de069dc7a7b"
+    # txid = "5029302f0c8c1c2ef856194ca8a7f78a7b6ba029b3a432466ba1d4ab2105aef5"
+    # txid = "0b6dc7910ed25a79ab6ce12e6a0dcb991c44708580b18f223b00a4526fd10bbf"
+    # txid = "9636a0d06128c89121b442ee56200a28b99350e658f4f0774db3ea64daad872a"
     txid = "525c4eef55f597d0344345ce9439b1e7eeb72053d0682eb2c6910a4f4d695987"
-    node = Node(dotenv_path="../.env")
-    print(node.nodeop_getblockcount())
-    print(node.check_tx_confirmation(tx_hash=txid))
-    print(node.nodeop_getconnectioncount())
+    txid = "611b40973fe68cc42b70ae5af365a449af458d76086415c6fa6c45364c36278e"
+    node = Node(dotenv_path="../.env", is_rpc=False)
     print("========================================================================================")
-    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=1)
-    
+    print("SHOWING actual blockheight - real time:")
+    print("----------------------------------------------------------------------------------------")
+    print(node.nodeop_getblockcount())
+    # print(node.check_tx_confirmation(tx_hash=txid))
+    # print(node.nodeop_getconnectioncount())
+    print("========================================================================================")
+    print("TX request:  blockchain.info, raw, parsed by bitcoinlib:")
+    print("----------------------------------------------------------------------------------------")
+    node = Node(dotenv_path="../.env", is_rpc=False)
+    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+    cucc_01 = bitcoinlib.transactions.Transaction.parse(tx_data)
+    for k, v in cucc_01.as_dict().items():
+        print("{}: {}".format(k, v))
+    print("========================================================================================")
+    print("TX request:  local Node, raw, parsed by bitcoinlib:")
+    print("----------------------------------------------------------------------------------------")
+    node = Node(dotenv_path="../.env", is_rpc=True)
+    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+    cucc_02 = bitcoinlib.transactions.Transaction.parse(tx_data)
+    for k, v in cucc_02.as_dict().items():
+        print("{}: {}".format(k, v))
+    print("========================================================================================")
+    print("TX request:  blockchain.info, as dict, parsed by blockchain.info:")
+    print("----------------------------------------------------------------------------------------")
+    node = Node(dotenv_path="../.env", is_rpc=False)
+    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
     for k, v in tx_data.items():
-        print(k, v)
+        print("{}: {}".format(k, v))
+
+    print("========================================================================================")
+    print("TX request:  local Node, as dict, parsed by Node:")
+    print("----------------------------------------------------------------------------------------")
+    node = Node(dotenv_path="../.env", is_rpc=True)
+    cucc = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
+    for k, v in cucc.items():
+        print("{}: {}".format(k, v))
+
+    print("========================================================================================")
+    print("TX request:  local Node, raw,  not parsed:")
+    print("----------------------------------------------------------------------------------------")
+    node = Node(dotenv_path="../.env", is_rpc=True)
+    cucc = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+    print(cucc)
+    # 
+    # print(cucc_01 == cucc_02)
+    # 
+    # # print(tx_data['vout'][0])
+    # 
+    # # ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360
+
     
-    # print(tx_data['vout'][0])
-    
-    # ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360
