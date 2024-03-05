@@ -719,6 +719,7 @@ SalletScreenManager:
             size_hint: 1, 1
             NodeDisplayArea:
                 height: max(self.minimum_height, scrlv_node.height)
+                width: max(self.minimum_width, scrlv_node.width)
                 id: node_display_area
                 size_hint: 1, None
     BoxLayout:
@@ -901,12 +902,6 @@ SalletScreenManager:
     valign: 'top'  ## middle, top, bottom
 
 <LabelWelcomeTitle@Label>:
-    ## canvas.before:
-    ##     Color:
-    ##         rgba: clr_blue
-    ##     Rectangle:
-    ##         pos: self.pos
-    ##         size: self.size
     color: clr_orange
     font_size: fs_title
     font_name: fn_title
@@ -914,13 +909,17 @@ SalletScreenManager:
     halign: 'center'  ## center, right, left
     valign: 'center'  ## middle, top, bottom
 
+<LabelWelcomeListNarrow@Label>:
+    color: clr_white
+    font_size: fs_data
+    font_name: fn_data
+    text_size: self.size
+    line_height: 1.1
+    ## padding: 80, 0, 80, 0 ##left, top, right, bottom
+    halign: 'justify'  ## center, right, left, justify
+    valign: 'top'  ## middle, top, bottom
+
 <LabelWelcomeIntro@Label>:
-    ## canvas.before:
-    ##     Color:
-    ##         rgba: clr_blue
-    ##     Rectangle:
-    ##         pos: self.pos
-    ##         size: self.size
     color: clr_white
     font_size: fs_text_normal
     font_name: fn_text_normal
@@ -938,8 +937,8 @@ SalletScreenManager:
     ##         pos: self.pos
     ##         size: self.size
     color: clr_white
-    font_size: fs_subtitle
-    font_name: fn_subtitle
+    font_size: fs_text_normal
+    font_name: fn_text_normal
     text_size: self.size
     ## padding: 80, 0, 10, 0 ##left, top, right, bottom
     line_height: 1.2
@@ -947,12 +946,6 @@ SalletScreenManager:
     valign: 'middle'  ## middle, top, bottom
 
 <LabelWelcomeListLeft@Label>:
-    ## canvas.before:
-    ##     Color:
-    ##         rgba: clr_blue
-    ##     Rectangle:
-    ##         pos: self.pos
-    ##         size: self.size
     color: clr_white
     font_size: fs_text_normal
     font_name: fn_text_normal
@@ -963,12 +956,6 @@ SalletScreenManager:
     valign: 'middle'  ## middle, top, bottom
 
 <LabelWelcomeListRight@Label>:
-    ## canvas.before:
-    ##     Color:
-    ##         rgba: clr_blue
-    ##     Rectangle:
-    ##         pos: self.pos
-    ##         size: self.size
     color: clr_white
     font_size: fs_subtitle
     font_name: fn_subtitle
@@ -979,12 +966,6 @@ SalletScreenManager:
     valign: 'top'  ## middle, top, bottom
 
 <LabelTitle@Label>:
-    ## canvas.before:
-    ##     Color:
-    ##         rgba: clr_light_bck
-    ##     Rectangle:
-    ##         pos: self.pos
-    ##         size: self.size
     color: clr_blue
     font_size: fs_title
     font_name: fn_title
@@ -993,12 +974,6 @@ SalletScreenManager:
     valign: 'center'  ## middle, top, bottom
 
 <LabelSubTitle@Label>:
-    ## canvas.before:
-    ##     Color:
-    ##         rgba: clr_wallet_bck
-    ##     Rectangle:
-    ##         pos: self.pos
-    ##         size: self.size
     color: clr_green
     font_size: fs_subtitle
     font_name: fn_subtitle
@@ -1073,11 +1048,12 @@ SalletScreenManager:
     scroll_timeout: 2000
     scroll_distance: 10
     bar_margin:3
-    bar_width: 5
+    bar_width: 10
     bar_color: 255/255, 143/255, 5/255, 0.8 
     bar_inactive_color: 255/255, 143/255, 5/255, 0.8 
-    do_scroll_x:False
-    scroll_type:['bars','content']
+    do_scroll_x: True ## False to prevent
+    do_scroll_y: True
+    scroll_type:['bars']
 
 #   ---------------------------------------------------------------------
 #   - ScrollView:                                               ENDED   -

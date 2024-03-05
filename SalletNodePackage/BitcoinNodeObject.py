@@ -8,19 +8,25 @@ import os
 import logging
 import inspect
 import time
+from bitcoinlib.transactions import Transaction as TXobj
 
 import requests as reqs
 from SalletNodePackage import RPCHost
 from SalletBasePackage.models import UtxoId
 from dotenv import load_dotenv
 
-lg = logging.getLogger(__name__)
-lg.info("START: {:>85} <<<".format('BitcoinNodeObject.py'))
+
+# Setting up logger                                         logger                      -   START   -
+lg = logging.getLogger()
+# Setting up logger                                         logger                      -   ENDED   -
+
+lg.debug("START: {:>85} <<<".format('BitcoinNodeObject.py'))
 
 
 class Node(object):
     """=== Class name: Node ============================================================================================
     Data- and methodcollection of Nodes, your system is in contact with.
+    Use an instance to handle all node related duties!
     :param dotenv_path: str - path to your .env file
     :param is_rpc: bool -   True:   if local RemoteProcedureCall is applied, thus LAN Fullnode is called
                                 False:  if remote API is contacted
@@ -28,29 +34,46 @@ class Node(object):
     ccn = inspect.currentframe().f_code.co_name
 
     def __init__(self,
-                 alias: str = "N/A",
-                 owner: str = "N/A",
-                 ip: str = '127.0.0.1',
-                 port: int = 8333,
-                 features: dict = {},
+                 alias: str,  # think of it as the ID of the Node inside your system
+                 is_rpc: bool,
+                 owner: (str, None) = "N/A",
+                 ip: (str, None) = None,
+                 port: (int, None) = 0,
+                 features: (dict, None) = None,
                  desc: str = "",
-                 dotenv_path: str = "./.env",
-                 is_rpc: bool = True):
-        self.alias: str = alias
-        self.owner: str = owner
-        self.ip: str = ip
-        self.port: int = port
-        self.features: dict = features
-        self.desc: str = desc
-        self.is_rpc: bool = is_rpc
-        self.dotenv_path: str = dotenv_path
-        
+                 dotenv_path: str = "./.env"):
+        self.dotenv_path: str                   = dotenv_path
+        self.alias: str                         = alias
+        self.owner: str                         = owner
+        self.ip: (str, None)                    = ip                # default: '127.0.0.1'
+        self.port: (int, None)                  = port              # default: 8333
+        self.features: dict or None             = features
+        self.desc: str                          = desc
+        self.is_rpc: bool                       = is_rpc
+        self.rpc_user: (str, None)              = None
+        self.rpc_password: (str, None)          = None
+        load_dotenv()
+        if self.is_rpc:
+            self.apply_dotenv_rpc_data()
+        lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
+                 .format(self.ccn, self.alias, self.owner, self.ip, self.port, self.is_rpc))
+
     def __repr__(self):
         return "{:>15}:{} - {} / {}".format(self.ip, self.port, self.alias, self.owner, )
 
     def __str__(self):
         return self.__repr__()
-
+    
+    def apply_dotenv_rpc_data(self):
+        """=== Method name: apply_dotenv_rpc_data ======================================================================
+        Whenever <self.is_rpc> is set to False, class assumes .env to have the necessary connection ans user data,
+        and overwrites data entered (if at all) with .env content.
+        ========================================================================================== by Sziller ==="""
+        self.ip: str            = os.getenv("RPC_IP")
+        self.port: int          = int(os.getenv("RPC_PORT"))
+        self.rpc_user: str      = os.getenv("RPC_USER")
+        self.rpc_password: str  = os.getenv("RPC_PSSW")
+        
     @classmethod
     def construct(cls, d_in):
         """=== Classmethod: construct ==================================================================================
@@ -79,25 +102,32 @@ class Node(object):
         lg.debug("reading   : dotenv data - {:>60}".format(cmn))
         load_dotenv(dotenv_path=self.dotenv_path)
         # ATTENTION: local IP address MUST BE WHITELISTED on Bitcoin Node!
-        rpcIP: str          = os.getenv("RPC_IP")
-        rpcUser: str        = os.getenv("RPC_USER")
-        rpcPassword: str    = os.getenv("RPC_PSSW")
-        rpcPort: str        = str(os.getenv("RPC_PORT"))
+        rpcIP: str          = self.ip  # os.getenv("RPC_IP")
+        rpcUser: str        = self.rpc_user  # os.getenv("RPC_USER")
+        rpcPassword: str    = self.rpc_password  # os.getenv("RPC_PSSW")
+        rpcPort: str        = self.port  # str(os.getenv("RPC_PORT"))
         lg.debug("returning : serverURL - to access local the RPC server {:>31}".format(cmn))
-        return 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcIP + ':' + rpcPort
+        return "http://{}:{}@{}:{}".format(rpcUser, rpcPassword, rpcIP, rpcPort)
+        # return 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcIP + ':' + rpcPort
     
     def nodeop_getconnectioncount(self):
-        """=== Fuction name: nodeop_getconnectioncount =====================================================================
-        ============================================================================================== by Sziller ==="""
+        """=== Fuction name: nodeop_getconnectioncount =================================================================
+        Method returns the number of actice connections of your Node. Only viable over RPC!
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
-        command = "getconnectioncount"
-        lg.debug("running   : {}".format(cmn))
-        serverURL = self.rpc_url()
-        OneReq = RPCHost.RPCHost(serverURL)
-        resp = OneReq.call(command)
-        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
-        lg.debug("exiting   : {}".format(cmn))
-        return resp
+        if self.is_rpc:
+            command = "getconnectioncount"
+            lg.debug("running   : {}".format(cmn))
+            serverURL = self.rpc_url()
+            OneReq = RPCHost.RPCHost(serverURL)
+            resp = OneReq.call(command)
+            lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
+            lg.debug("exit      : {}".format(cmn))
+            return resp
+        else:
+            msg = "Request only possible for local Node and when using RPC!\n - says: {} at {}".format(cmn, self.ccn)
+            lg.critical(msg)
+            raise Exception(msg)
 
     def nodeop_getblockhash(self, sequence_nr: int):
         cmn = inspect.currentframe().f_code.co_name  # current method name
@@ -108,6 +138,7 @@ class Node(object):
             OneReq = RPCHost.RPCHost(serverURL)
             blockhash = OneReq.call(command, sequence_nr)
         else:
+            resp = reqs.get('https://blockchain.info/q/{}'.format(command))
             blockhash = False
         return blockhash
 
@@ -119,8 +150,7 @@ class Node(object):
         command = "getblockcount"
         lg.debug("running   : {}".format(cmn))
         if self.is_rpc:
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(serverURL)
+            OneReq = RPCHost.RPCHost(self.rpc_url())
             actual_blockcount = OneReq.call(command)
         else:
             resp = reqs.get('https://blockchain.info/q/{}'.format(command))
@@ -209,7 +239,7 @@ class Node(object):
                 resp = reqs.get(request_txt)
                 try:
                     method_response = resp.json()
-                    lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
+                    # lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
                 except:
                     method_response = {}
                     lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format("", request_txt))
@@ -220,7 +250,7 @@ class Node(object):
                 resp = reqs.get(request_txt)
                 try:
                     method_response = resp.text
-                    lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
+                    # lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
                 except:
                     method_response  = ""
                     lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format("", request_txt))
@@ -230,13 +260,25 @@ class Node(object):
         lg.debug("exiting   : {}".format(cmn))
         return method_response
     
-    def nodeop_get_tx_outpoint(self, tx_outpoint: UtxoId):
+    def nodeop_get_tx_outpoint_value(self, tx_outpoint: UtxoId) -> int:
+        """=== Method name: nodeop_get_tx_outpoint =====================================================================
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         if self.is_rpc:
             serverURL = self.rpc_url()
             OneReq = RPCHost.RPCHost(url=serverURL)
-            resp = OneReq.call("getrawtransaction", tx_outpoint.txid, True)
-            return resp["vout"][tx_outpoint.n]
+            hxstr = OneReq.call("getrawtransaction", tx_outpoint.txid, False)
+        else:
+            try:
+                request_txt = "https://blockchain.info/rawtx/{}{}".format(tx_outpoint.txid, "?format=hex")
+                resp = reqs.get(request_txt)
+                hxstr = resp.text
+            except:
+                msg = "failed    : issue with request from blockchain.info - says {}.{}()".format(self.ccn, cmn)
+                lg.critical(msg)
+                raise Exception(msg)
+        tx = TXobj.parse(hxstr)
+        return tx.outputs[tx_outpoint.n].value
             
     def nodeop_confirmations(self, tx_hash: str) -> int:
         """=== Method name: nodeop_confirmations =======================================================================
@@ -278,7 +320,7 @@ class Node(object):
                 resp = reqs.get(request_txt)
                 try:
                     actual_tx_data: dict = resp.json()
-                    lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(actual_tx_data))
+                    # lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(actual_tx_data))
                 except:
                     actual_tx_data = {}
                     lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format(ping_times, request_txt))
@@ -305,6 +347,23 @@ class Node(object):
 
 
 if __name__ == "__main__":
+
+    log_time = ""
+    rootpath_all_config = ".."
+    log_filename = "{}/log/BitcoinNodeObject_{}.log".format(rootpath_all_config, log_time)
+    LOG_FORMAT = "%(asctime)s [%(levelname)8s]: %(message)s"
+    LOG_LEVEL = logging.DEBUG  # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
+
+    logging.basicConfig(
+        filename=log_filename,
+        level=LOG_LEVEL,
+        format=LOG_FORMAT,
+        datefmt='%y%m%d %H:%M:%S',
+        # filemode="a",
+        filemode="w"
+    )
+    lg.warning("START: {:>85} <<<".format('__name__ == "__main__" namespace: BitcoinNodeObject.py'))
+    
     import bitcoinlib
     txid = "ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360"
     txid = "7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741"
@@ -313,58 +372,102 @@ if __name__ == "__main__":
     # txid = "5029302f0c8c1c2ef856194ca8a7f78a7b6ba029b3a432466ba1d4ab2105aef5"
     # txid = "0b6dc7910ed25a79ab6ce12e6a0dcb991c44708580b18f223b00a4526fd10bbf"
     # txid = "9636a0d06128c89121b442ee56200a28b99350e658f4f0774db3ea64daad872a"
-    txid = "525c4eef55f597d0344345ce9439b1e7eeb72053d0682eb2c6910a4f4d695987"
-    txid = "611b40973fe68cc42b70ae5af365a449af458d76086415c6fa6c45364c36278e"
-    node = Node(dotenv_path="../.env", is_rpc=False)
-    print("========================================================================================")
-    print("SHOWING actual blockheight - real time:")
-    print("----------------------------------------------------------------------------------------")
-    print(node.nodeop_getblockcount())
-    # print(node.check_tx_confirmation(tx_hash=txid))
-    # print(node.nodeop_getconnectioncount())
-    print("========================================================================================")
-    print("TX request:  blockchain.info, raw, parsed by bitcoinlib:")
-    print("----------------------------------------------------------------------------------------")
-    node = Node(dotenv_path="../.env", is_rpc=False)
-    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-    cucc_01 = bitcoinlib.transactions.Transaction.parse(tx_data)
-    for k, v in cucc_01.as_dict().items():
-        print("{}: {}".format(k, v))
-    print("========================================================================================")
-    print("TX request:  local Node, raw, parsed by bitcoinlib:")
-    print("----------------------------------------------------------------------------------------")
-    node = Node(dotenv_path="../.env", is_rpc=True)
-    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-    cucc_02 = bitcoinlib.transactions.Transaction.parse(tx_data)
-    for k, v in cucc_02.as_dict().items():
-        print("{}: {}".format(k, v))
-    print("========================================================================================")
-    print("TX request:  blockchain.info, as dict, parsed by blockchain.info:")
-    print("----------------------------------------------------------------------------------------")
-    node = Node(dotenv_path="../.env", is_rpc=False)
-    tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
-    for k, v in tx_data.items():
-        print("{}: {}".format(k, v))
-
-    print("========================================================================================")
-    print("TX request:  local Node, as dict, parsed by Node:")
-    print("----------------------------------------------------------------------------------------")
-    node = Node(dotenv_path="../.env", is_rpc=True)
-    cucc = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
-    for k, v in cucc.items():
-        print("{}: {}".format(k, v))
-
-    print("========================================================================================")
-    print("TX request:  local Node, raw,  not parsed:")
-    print("----------------------------------------------------------------------------------------")
-    node = Node(dotenv_path="../.env", is_rpc=True)
-    cucc = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-    print(cucc)
-    # 
-    # print(cucc_01 == cucc_02)
-    # 
-    # # print(tx_data['vout'][0])
-    # 
-    # # ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360
-
+    # txid = "525c4eef55f597d0344345ce9439b1e7eeb72053d0682eb2c6910a4f4d695987"
+    # txid = "611b40973fe68cc42b70ae5af365a449af458d76086415c6fa6c45364c36278e"
+    txid = "7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741"
     
+    lg.warning("========================================================================================")
+    lg.warning("=== nodeop_getconnectioncount                                                        ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=True, alias="sziller", owner="sziller.eu")
+    lg.info("TESTING   : {:>80} <<<".format('nodeop_getconnectioncount'))
+    try:
+        lg.info(node.nodeop_getconnectioncount())
+    except:
+        lg.error("FAILED    : <nodeop_getconnectioncount>")
+
+    lg.warning("========================================================================================")
+    lg.warning("=== nodeop_getconnectioncount                                                        ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=False, alias="sziller", owner="sziller.eu")
+    lg.info("TESTING   : {:>80} <<<".format('nodeop_getconnectioncount'))
+    try:
+        lg.info(node.nodeop_getconnectioncount())
+    except:
+        lg.error("FAILED    : <nodeop_getconnectioncount>")
+    
+    lg.warning("========================================================================================")
+    lg.warning("=== SHOWING actual blockheight - real time:")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=False, alias="sziller", owner="sziller.eu")
+    lg.info("TESTING   : {:>80} <<<".format('nodeop_getblockcount'))
+    try:
+        lg.info(node.nodeop_getblockcount())
+    except:
+        lg.error("FAILED    : <nodeop_getblockcount>")
+
+    lg.warning("========================================================================================")
+    lg.warning("=== TX request:  blockchain.info, raw, parsed by bitcoinlib:")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=False, alias="sziller", owner="sziller.eu")
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+        tx_data_parsed = bitcoinlib.transactions.Transaction.parse(tx_data)
+        for k, v in tx_data_parsed.as_dict().items():
+            lg.debug("{}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+        
+    lg.warning("========================================================================================")
+    lg.warning("=== TX request:  local Node, raw, parsed by bitcoinlib:                              ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=True, alias="sziller", owner="sziller.eu")
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+        tx_data_parsed = bitcoinlib.transactions.Transaction.parse(tx_data)
+        for k, v in tx_data_parsed.as_dict().items():
+            lg.debug("{}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+    
+    lg.warning("========================================================================================")
+    lg.warning("=== TX request:  blockchain.info, as dict, parsed by blockchain.info:                ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=False, alias="sziller", owner="sziller.eu")
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
+        for k, v in tx_data.items():
+            lg.debug("{}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+
+    lg.warning("========================================================================================")
+    lg.warning("=== TX request:  local Node, as dict, parsed by Node:                                ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=True, alias="sziller", owner="sziller.eu")
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
+        for k, v in tx_data.items():
+            lg.debug("{}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+
+    lg.warning("========================================================================================")
+    lg.warning("=== TX request:  local Node, raw,  not parsed:                                       ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=True, alias="sziller", owner="sziller.eu")
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+        for k, v in tx_data.items():
+            lg.debug("{}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+    # # ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360
+    
+    lg.warning("========================================================================================")
+    lg.warning("=== nodeop_get_tx_outpoint_value                                                     ===")
+    lg.warning("========================================================================================")
+    node = Node(dotenv_path="../.env", is_rpc=False, alias="sziller", owner="sziller.eu")
+    op_id = UtxoId.construct(
+        {"txid": '7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741', "n": 0})  # creating matching outputs outpoint ID
+    print(node.nodeop_get_tx_outpoint_value(tx_outpoint=op_id))

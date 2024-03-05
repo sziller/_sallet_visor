@@ -47,6 +47,7 @@ class Node(Base):
     port: int                       = Column("port", Integer)
     features: dict                  = Column("features", JSON)
     desc: str                       = Column("desc", String)
+    is_rpc: bool                    = Column("is_rpc", Integer)
     
     def __init__(self,
                  alias: str,
@@ -54,13 +55,15 @@ class Node(Base):
                  ip: str,
                  port: int,
                  features: dict,
-                 desc: str):
+                 desc: str,
+                 is_rpc: int):
         self.alias: str     = alias
         self.owner: str     = owner
         self.ip: str        = ip
         self.port: int      = port
         self.features: dict = features
         self.desc: str      = desc
+        self.is_rpc: int    = is_rpc
 
     def return_as_dict(self):
         """=== Method name: return_as_dict =============================================================================

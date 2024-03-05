@@ -34,9 +34,11 @@ class UtxoId:
         return cls(txid=utxo_id_atom_list[0], n=int(utxo_id_atom_list[1]))
     
 
-
 class Utxo:
+    """=== Class name: Utxo ============================================================================================
+    ============================================================================================== by Sziller ==="""
     ccn = inspect.currentframe().f_code.co_name
+    
     def __init__(self, utxo_id: UtxoId):
         self.utxo_id: UtxoId                    = utxo_id
         self.separator = UtxoId.divider
@@ -63,8 +65,12 @@ class Utxo:
         ========================================================================================== by Sziller ==="""
         return cls(**d_in)
 
+
 class ScriptPubKey:
+    """=== Class name: ScriptPubKey ====================================================================================
+    ============================================================================================== by Sziller ==="""
     ccn = inspect.currentframe().f_code.co_name
+    
     def __init__(self, spk_ams: str, spk_hex: str, spk_reqSigs: int, spk_type: str, spk_addresses: list):
         self.asm: str               = spk_ams
         self.hex: str               = spk_hex

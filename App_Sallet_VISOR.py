@@ -3,7 +3,7 @@ by Sziller"""
 
 import os
 import sys
-import dotenv
+
 import inspect
 import cv2
 import pyqrcode
@@ -17,13 +17,15 @@ from kivy.graphics.texture import Texture
 
 from SalletBasePackage.WidgetClasses import *
 from SalletBasePackage import SQL_interface as sql, models
+from SalletVisorPackage import UtxoManager as UtxoMan
 from SalletBasePackage import units
-from SalletBasePackage import DataDisplay as DaDi
+from DataVisualizer.data2str import rdf
 from SalletNodePackage import NodeManager as NodeMan
 from SalletNodePackage import BitcoinNodeObject as BtcNode
-from SalletVisorPackage import UtxoManager as UtxoMan
 
 from kivy.config import Config
+import dotenv
+import config as conf
 
 DOTENV_PATH = "./.env"
 
@@ -377,7 +379,7 @@ class OpAreaBrowse(OperationAreaBox):
         except:
             inst.background_color = (1, 0, 0)
             inst.text = "INVALID"
-        data_as_displayed = DaDi.rec_data_plotter(data=returned_json, string="")
+        data_as_displayed = rdf(returned_json, **conf.BROWSER_SYMBOLS)
         self.ids.lbl_tx_info.text = data_as_displayed
         
         
@@ -690,7 +692,7 @@ class SalletVISOR(App):
     ============================================================================================== by Sziller ==="""
     def __init__(self, window_content: str, csm: float = 1.0, dotenv_path="./.env"):
         super(SalletVISOR, self).__init__()
-        self.window_content = window_content 
+        self.window_content = window_content
         self.content_size_multiplier = csm
         self.dotenv_path: str = dotenv_path
         self.title: str = "Sallet - Visor: your transaction handler"
@@ -748,7 +750,7 @@ class SalletVISOR(App):
         self.root.ids.screen_intro.ids.oparea_intro.ids.lbl_welcome_intro.text = WELCOME_TXT
         # --- Filling in large text-fields of Labels                                            ENDED   -
         # --- Setting default Node                                                              START   -
-        self.actual_node_object = BtcNode.Node(is_rpc=True, dotenv_path=self.dotenv_path)
+        self.actual_node_object = BtcNode.Node(alias= "", is_rpc=True, dotenv_path=self.dotenv_path)
         # --- Setting default Node                                                              ENDED   -
 
         

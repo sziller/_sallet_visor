@@ -49,7 +49,10 @@ class NODEManager:
         Once self.node_list is given, this script creates a dictionary from it.
         ========================================================================================== by Sziller ==="""
         self.node_obj_dict = {}
+        for _ in self.node_list:
+            print(_)
         for node in self.node_list:
-            alias = node['alias']
             print(node)
+            alias = node['alias']
+            # print(node)
             self.node_obj_dict[alias] = Node.construct(node)

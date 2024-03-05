@@ -12,7 +12,11 @@ from SalletBasePackage import SQL_interface as sqla, models
 from SalletBasePackage import units
 from SalletNodePackage import BitcoinNodeObject as BtcNode
 
-lg = logging.getLogger(__name__)
+
+# Setting up logger                                         logger                      -   START   -
+lg = logging.getLogger()
+# Setting up logger                                         logger                      -   ENDED   -
+
 lg.info("START     : {:>85} <<<".format('UtxoManager.py'))
 
 
@@ -20,26 +24,31 @@ class UTXOManager:
     """=== Classname: UTXOManager ======================================================================================
     Object manages custom made wallet's utxo related tasks, processes.
     ============================================================================================== by Sziller ==="""
+    # current class name
     ccn = inspect.currentframe().f_code.co_name  # current class name
     
-    def __init__(self, dotenv_path="./.env", session_in=False):
+    def __init__(self, dotenv_path: str ="./.env", session_in: bool=False, from_yaml: bool = False):
         lg.info("__init__  : {:>60}".format(self.ccn))
         self.dotenv_path: str               = dotenv_path
         load_dotenv(dotenv_path=dotenv_path)
+        self.from_yaml: bool                = from_yaml
         self.balance_total: float           = 0
         self.address_set: set               = set()
         self.sums_per_address_dict: dict    = {}
         self.utxo_set: list                 = []  # list of all utxo data
         self.utxo_set_dict: dict            = {}  # set of utxo_id's
         if not session_in:
-            self.session = sqla.createSession(db_path=os.getenv("DB_PATH_UTXO"), style=os.getenv("DB_STYLE_UTXO"))
+            self.session_in = sqla.createSession(db_path=os.getenv("DB_PATH_UTXO"), style=os.getenv("DB_STYLE_UTXO"))
         else:
             self.session_in = session_in
         
-        self.path_map = {"utxo": "UTXO_SET_YAML_PATH", "utxo_id": "utxo_set_dict_YAML_PATH"}
-        self.assign_map = {"utxo": "utxo_set", "utxo_id": "utxo_set_dict"}
+        self.path_map: dict     = {"utxo": "UTXO_SET_YAML_PATH",    "utxo_id": "utxo_set_dict_YAML_PATH"}
+        self.assign_map: dict   = {"utxo": "utxo_set",              "utxo_id": "utxo_set_dict"}
         
-        self.read_db()
+        if self.from_yaml:
+            self.read_yaml()
+        else:
+            self.read_db()
         
         self.extract_uxto_set_dict()
         self.extract_total_balance()
@@ -57,21 +66,26 @@ class UTXOManager:
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current class name
         
-        if mode not in list(self.path_map.keys()):
-            lg.critical("<mode> = '{}' unrecognized! - says {}.{}".format(mode, self.ccn, cmn))
-        yaml_path = os.getenv(self.path_map[mode])
-        with open(yaml_path, 'r') as stream:
-            try:
-                read_in_yaml = yaml.safe_load(stream)
-                lg.info("read in   : {}-set from {}\n - says {}".format(mode, yaml_path, self.ccn))
-            except yaml.YAMLError as exc:
-                print(exc)
-                lg.critical("read in   : failed from {}\n - says {}".format(yaml_path, self.ccn))
-        setattr(self, self.assign_map[mode], read_in_yaml)
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        print(read_in_yaml)
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    
+        if mode in list(self.path_map.keys()):
+            yaml_path = os.getenv(self.path_map[mode])
+            with open(yaml_path, 'r') as stream:
+                try:
+                    read_in_yaml = yaml.safe_load(stream)
+                    lg.info("read in   : {}-set from {}\n - says {}".format(mode, yaml_path, self.ccn))
+                except yaml.YAMLError as exc:
+                    msg = "read in   : failed from {}\n - says {}".format(yaml_path, self.ccn)
+                    lg.critical(exc)
+                    lg.critical(msg)
+                    raise Exception(msg)
+            setattr(self, self.assign_map[mode], read_in_yaml)
+            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+            print(read_in_yaml)
+            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        else:
+            msg = "<mode> = '{}' unrecognized! - says {}.{}".format(mode, self.ccn, cmn)
+            lg.critical(msg)
+            raise Exception(msg)
+        
     def write_yaml(self, mode: str = "utxo"):
         """=== Method name: write_yaml =================================================================================
         Method writes data to yaml file.
@@ -126,7 +140,7 @@ class UTXOManager:
         ========================================================================================== by Sziller ==="""
         pass
         
-    def filter_balance_per_address(self):        
+    def filter_balance_per_address(self):
         self.sums_per_address_dict = {addr: 0 for addr in self.address_set}
         for utxo in self.utxo_set:
             self.sums_per_address_dict[utxo["address"]] += utxo["sat_value"]
@@ -153,6 +167,10 @@ class UTXOManager:
 
 
 if __name__ == "__main__":
+    # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
+    logging.basicConfig(filename="../log/UtxoManager.log", level=logging.NOTSET, filemode="w",
+                        format="%(asctime)s [%(levelname)8s]: %(message)s", datefmt='%y%m%d %H:%M:%S')
+    lg.warning("START: {:>85} <<<".format('__name__ == "__main__" namespace: UtxoManager.py'))
     bnc = UTXOManager()
     pass
     

@@ -1,11 +1,10 @@
-'''RPC_Host'''
+"""RPC_Host"""
+
 import time
 import inspect
 import logging
 import requests
 import json
-
-'''RPC_Host'''
 
 # Set up a logger
 lg = logging.getLogger(__name__)
@@ -29,8 +28,8 @@ class RPCHost(object):
         Method performs the actual calling of the RPC
         ========================================================================================== by Sziller ==="""
         payload = json.dumps({"method": rpc_method, "params": list(params), "jsonrpc": "2.0"})
-        tries = 100
-        slp = 5
+        tries = 10
+        slp = 0.5
         hadconnectionfailures = False
         while True:
             try:
@@ -62,4 +61,4 @@ class RPCHost(object):
 
 
 if __name__ == "__main__":
-    command = "getblockhash"
+    pass

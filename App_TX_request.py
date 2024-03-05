@@ -1,7 +1,7 @@
 """Quick app to read TX data
 by Sziller"""
 from SalletNodePackage import BitcoinNodeObject as BNOb
-from SalletBasePackage import DataDisplay as DaDi
+from DataVisualizer.data2str import rdf
 
 
 def app_node_tx_request():
@@ -15,7 +15,7 @@ def app_node_tx_request():
     tx_hash = str(input("Enter tx ID: "))
     
     tx_data = node.nodeop_getrawtransaction(tx_hash=tx_hash, verbose=True)
-    data_as_displayed = DaDi.rec_data_plotter(data=tx_data, string="")
+    data_as_displayed = rdf(data=tx_data)
     print(data_as_displayed)
 
 

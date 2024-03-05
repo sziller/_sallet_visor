@@ -1,21 +1,24 @@
 """
 Tracking ordinals on Bitcoin:
 
-we use 3 different expressions to distinguish between different types of ordinals:
-- abs: absolute - the ordinal numbers on-chain
-- rel: relative - ordinal numbers inside a TX
-- loc: rel.local ordinals inside a given input or output
+we use 4 different expressions to distinguish between different types of ordinal numbers:
+
+- ch: CHain         - absolute - Ordinal numbers on-chain (this is referred to as Ordinals with capital 'O')
+- bl: BLock         - relative - ordinal numbers inside a Block
+- tx: Transaction   - relative - ordinal numbers inside a TX
+- op: OutPut        - relative - ordinals inside a given input or output
+
 
         # example for our case:
         # (5, 6, 7, 8)
-        # range(5, 9) -> range (init, stop) -> (init, ...., last)
-        # 5: init
+        # range(5, 9) -> range (start, stop) -> entries in it: (start, ...., last)
+        # 5: start
         # 8: last
         # 9: stop
-        # len = stop - init = 4 = 9 - 5
+        # len = stop - start = 4 = 9 - 5
         # stop = last + 1 = 9 = 8 + 1
         # (9, 10, 11)
-        # previous range's stop = subsequent range's init
+        # previous range's stop = subsequent range's start
 """
 
 import bitcoinlib
@@ -221,7 +224,7 @@ class CalcOrdinals:
 if __name__ == "__main__":
     # tx_id = "7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741"
     # tx_id = "4bb697b2f8e6160c8ac91fcdfb9acafe3011d44e23f745c301e569a1b3b4a679"  # many outputs
-    # tx_id = "d53cb2720b9b00d80aced71d2f68bce2301cab5d3e073fc86838bb62f1abdb4f"  # coinbase related
+    # tx_id = "d53cb2720b9b00d80aced71d2f68bce2301cab5d3e073fc86838bb62f1abdb4f"  # coinbase related - but not really
     # tx_id = "785822e4f31959ea9b0e3eca7ff9208dd45f968549baa45a66c1155efb28443f"  # tons of inputs - long calc!!!
     # tx_id = "44932e0abb2e8ee770cae42ec4f1a3dc68a4663bb8da87e56258a33b67f68f4a"  # many on both sides
     # tx_id = "21bb393e74b1828e627b985186ef9a93e39e81726613458c3a68bf956757d413"  # general tx

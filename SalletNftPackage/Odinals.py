@@ -4,10 +4,11 @@ by Sziller ==="""
 
 import logging
 
+
 def is_tx_coinbase(tx_hxstr: str) -> bool:
     """=== Function name: is_tx_coinbase ===============================================================================
     Basic, one purpose parser.
-    Function takes in a raw TX hexadecimal format, and checks (acordnig to hardcoded rules)
+    Function takes in a raw TX hexadecimal format, and checks (accordnig to hardcoded rules)
     if TX is Coinbase or not.
     Purpose: to avoid using any parsers (due to representation ambuguity)
     ============================================================================================== by Sziller ==="""

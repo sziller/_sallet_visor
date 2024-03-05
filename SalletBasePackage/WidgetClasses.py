@@ -56,6 +56,11 @@ class LabelWelcomeList(Label):
     pass
 
 
+class LabelWelcomeListNarrow(Label):
+    """custom Label"""
+    pass
+
+
 class ScreenTitleLabel(Label):
     """custom Label"""
     pass
@@ -219,10 +224,11 @@ class NodeRowObj(BoxLayout):
         self.parent_op_area: OperationAreaBox = parent_op_area
         
         self.lbl_alias              = LabelWelcomeList(text=self.node_obj.alias)
-        self.lbl_ip                 = LabelWelcomeListLeft(text=self.node_obj.ip)
+        self.lbl_ip                 = LabelWelcomeList(text=self.node_obj.ip)
         self.lbl_port               = LabelWelcomeListLeft(text=str(self.node_obj.port))
         self.lbl_owner              = LabelWelcomeListLeft(text=self.node_obj.owner)
         self.lbl_desc               = LabelLead(text=self.node_obj.desc)
+        self.lbl_is_rpc             = LabelWelcomeList(text={0: 'False', 1: 'True'}[self.node_obj.is_rpc])
         self.btn_use                = ButtonSallet(text="use")
         self.btn_use.bind(on_release=self.use_this_node)
         self.lbl_scrollbar          = LabelEnd(text=" - ")
@@ -231,7 +237,9 @@ class NodeRowObj(BoxLayout):
         self.lbl_ip.size_hint           = (0.175, 1)
         self.lbl_port.size_hint         = (0.1, 1)
         self.lbl_owner.size_hint        = (0.225, 1)
-        self.lbl_desc.size_hint         = (0.25, 1)
+        self.lbl_desc.size_hint         = (0.15, 1)
+        self.lbl_is_rpc.size_hint       = (0.10, 1)
+        
         self.btn_use.size_hint          = (0.03, 1)
         self.lbl_scrollbar.size_hint    = (0.02, 1)
         
@@ -240,6 +248,7 @@ class NodeRowObj(BoxLayout):
         self.add_widget(self.lbl_port)
         self.add_widget(self.lbl_owner)
         self.add_widget(self.lbl_desc)
+        self.add_widget(self.lbl_is_rpc)
         self.add_widget(self.btn_use)
         self.add_widget(self.lbl_scrollbar)
 
