@@ -27,32 +27,42 @@ class UTXOManager:
     # current class name
     ccn = inspect.currentframe().f_code.co_name  # current class name
     
-    def __init__(self, dotenv_path: str ="./.env", session_in: bool=False, from_yaml: bool = False):
+    def __init__(self, root_path="./", dotenv_name=".env", session_in=False):
         lg.info("__init__  : {:>60}".format(self.ccn))
-        self.dotenv_path: str               = dotenv_path
-        load_dotenv(dotenv_path=dotenv_path)
-        self.from_yaml: bool                = from_yaml
+        self.root_path: str = root_path
+        self.dotenv_path: str = self.root_path + dotenv_name
+        load_dotenv(dotenv_path=self.dotenv_path)
+        # self.from_yaml: bool                = from_yaml
         self.balance_total: float           = 0
         self.address_set: set               = set()
         self.sums_per_address_dict: dict    = {}
         self.utxo_set: list                 = []  # list of all utxo data
+        self.utxo_obj_set: list             = []  # list of all utxo objects
         self.utxo_set_dict: dict            = {}  # set of utxo_id's
         if not session_in:
-            self.session_in = sqla.createSession(db_path=os.getenv("DB_PATH_UTXO"), style=os.getenv("DB_STYLE_UTXO"))
+            self.session = sqla.createSession(db_path=self.root_path + os.getenv("DB_PATH_UTXO"),
+                                              style=os.getenv("DB_STYLE_UTXO"),
+                                              tables=[sqla.Utxo.__table__])
         else:
-            self.session_in = session_in
+            self.session = session_in
         
         self.path_map: dict     = {"utxo": "UTXO_SET_YAML_PATH",    "utxo_id": "utxo_set_dict_YAML_PATH"}
         self.assign_map: dict   = {"utxo": "utxo_set",              "utxo_id": "utxo_set_dict"}
+
+        self.read_yaml()
+        self.instantiate_list_entries()
+        datalist=[_.return_db_inputdict() for _ in self.utxo_obj_set]
+        self.export_utxoset_to_db(export_session=self.session, datalist=datalist)
+        # if self.from_yaml:
+        #     self.read_yaml()
+        # else:
+        #     self.read_db()
         
-        if self.from_yaml:
-            self.read_yaml()
-        else:
-            self.read_db()
+        # self.extract_uxto_set_dict()
+        # self.extract_total_balance()
+        # self.export_utxoset_to_db()
         
-        self.extract_uxto_set_dict()
-        self.extract_total_balance()
-        self.export_utxoset_to_db()
+
         
     def sync_with_blockchain(self):
         """=== Method name: sync_with_blockchain =======================================================================
@@ -67,7 +77,7 @@ class UTXOManager:
         cmn = inspect.currentframe().f_code.co_name  # current class name
         
         if mode in list(self.path_map.keys()):
-            yaml_path = os.getenv(self.path_map[mode])
+            yaml_path = self.root_path + os.getenv(self.path_map[mode])
             with open(yaml_path, 'r') as stream:
                 try:
                     read_in_yaml = yaml.safe_load(stream)
@@ -77,15 +87,25 @@ class UTXOManager:
                     lg.critical(exc)
                     lg.critical(msg)
                     raise Exception(msg)
+            print(self.assign_map[mode])
             setattr(self, self.assign_map[mode], read_in_yaml)
             print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-            print(read_in_yaml)
+            for _ in read_in_yaml:
+                print(_)
             print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         else:
             msg = "<mode> = '{}' unrecognized! - says {}.{}".format(mode, self.ccn, cmn)
             lg.critical(msg)
             raise Exception(msg)
-        
+    
+    def instantiate_list_entries(self):
+        self.utxo_obj_set = []
+        for _ in self.utxo_set:
+            _id_ = models.UtxoId.construct_from_string(_['utxo_id'])
+            inst = models.Utxo(utxo_id=_id_)
+            inst.set_attributes(d_in=_)
+            self.utxo_obj_set.append(inst)
+    
     def write_yaml(self, mode: str = "utxo"):
         """=== Method name: write_yaml =================================================================================
         Method writes data to yaml file.
@@ -98,13 +118,12 @@ class UTXOManager:
         with open(yaml_path, 'w') as outfile:
             yaml.dump(getattr(self, self.assign_map[mode]), outfile, default_flow_style=False)
         
-    def export_utxoset_to_db(self, export_session = ""):
-        export_session = sqla.createSession(db_path=os.getenv("DB_PATH_VISOR"), style=os.getenv("DB_STYLE_VISOR"))
+    def export_utxoset_to_db(self, export_session, datalist):
         print("IN")
         for _ in self.utxo_set:
             print(_)
         sqla.ADD_rows_to_table(primary_key="utxo_id",
-                               data_list=self.utxo_set,
+                               data_list=datalist,
                                db_table="utxoset",
                                session_in=export_session)
 
@@ -171,7 +190,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename="../log/UtxoManager.log", level=logging.NOTSET, filemode="w",
                         format="%(asctime)s [%(levelname)8s]: %(message)s", datefmt='%y%m%d %H:%M:%S')
     lg.warning("START: {:>85} <<<".format('__name__ == "__main__" namespace: UtxoManager.py'))
-    bnc = UTXOManager()
+    bnc = UTXOManager(dotenv_name=".env", root_path="../")
     pass
     
     

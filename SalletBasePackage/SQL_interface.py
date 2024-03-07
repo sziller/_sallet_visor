@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 Base = declarative_base()
 
 
-def createSession(db_path: str, style: str = "SQLite", base=Base):
+def createSession(db_path: str, tables: list or None = None, style: str = "SQLite", base=Base):
     """=== Function name: createSession ================================================================================
     ============================================================================================== by Sziller ==="""
     if style == "SQLite":
@@ -29,7 +29,7 @@ def createSession(db_path: str, style: str = "SQLite", base=Base):
     else:
         raise Exception("no valid dialect defined")
 
-    base.metadata.create_all(bind=engine)  # check if always necessary!!!
+    base.metadata.create_all(bind=engine, tables=tables)  # check if always necessary!!!
     Session = sessionmaker(bind=engine)
     return Session()
 
@@ -37,8 +37,8 @@ def createSession(db_path: str, style: str = "SQLite", base=Base):
 
 
 class Node(Base):
-    """=== Classname: Utxo(Base) =======================================================================================
-    Class represents scheduled task who's data is to be stored and processed by the DB
+    """=== Classname: Node(Base) =======================================================================================
+    Class represents a Node Database Entry who's data is to be stored and processed by the DB
     ============================================================================================== by Sziller ==="""
     __tablename__ = "nodes"
     alias: str                      = Column("alias", String, primary_key=True)
@@ -84,7 +84,7 @@ class Node(Base):
     
 class Utxo(Base):
     """=== Classname: Utxo(Base) =======================================================================================
-    Class represents scheduled task who's data is to be stored and processed by the DB
+    Class represents a Utxo Database Entry who's data is to be stored and processed by the DB
     ============================================================================================== by Sziller ==="""
     __tablename__ = "utxoset"
     utxo_id: str                    = Column("utxo_id", String, primary_key=True)
@@ -137,15 +137,8 @@ class Utxo(Base):
         @param d_in: dict - format data to instantiate new object
         @return: an instance of the class
         ========================================================================================== by Sziller ==="""
-        # return cls(n=d_in["n"],
-        #            txid=d_in["txid"],
-        #            value=d_in["value"],
-        #            addresses=d_in["scriptPubKey"]["addresses"],
-        #            scriptPubKey_hex=d_in["scriptPubKey"]["hex"],
-        #            scriptPubKey_asm=d_in["scriptPubKey"]["asm"],
-        #            reqSigs=d_in["scriptPubKey"]["reqSigs"],
-        #            scriptType=d_in["scriptPubKey"]["type"])
         return cls(**d_in)
+    
 
 
 class MDPrvKey(Base):

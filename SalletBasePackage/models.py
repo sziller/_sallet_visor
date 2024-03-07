@@ -64,8 +64,25 @@ class Utxo:
         @return: an instance of the class
         ========================================================================================== by Sziller ==="""
         return cls(**d_in)
-
-
+    
+    def set_attributes(self, d_in):
+        for param, attr in d_in.items():
+            setattr(self, param, attr)
+    
+    def return_db_inputdict(self):
+        """=== Method name: return_db_inputdict ========================================================================
+        ========================================================================================== by Sziller ==="""
+        d_in = self.data()
+        return {"n": d_in["n"],
+                "txid": d_in["txid"],
+                "value": d_in["value"],
+                "addresses": d_in["scriptPubKey"]["addresses"],
+                "scriptPubKey_hex": d_in["scriptPubKey"]["hex"],
+                "scriptPubKey_asm": d_in["scriptPubKey"]["asm"],
+                "reqSigs": d_in["scriptPubKey"]["reqSigs"],
+                "scriptType": d_in["scriptPubKey"]["type"]}
+    
+    
 class ScriptPubKey:
     """=== Class name: ScriptPubKey ====================================================================================
     ============================================================================================== by Sziller ==="""
