@@ -1,4 +1,4 @@
-""" 
+"""
 Sallet univers' utxo manager
 by Sziller
 """
