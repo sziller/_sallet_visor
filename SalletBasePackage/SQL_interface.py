@@ -140,7 +140,6 @@ class Utxo(Base):
         return cls(**d_in)
     
 
-
 class MDPrvKey(Base):
     """=== Class name: MDPrvKey ========================================================================================
     Table row.

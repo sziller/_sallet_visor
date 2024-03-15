@@ -32,21 +32,47 @@ class UtxoId:
         ========================================================================================== by Sziller ==="""
         utxo_id_atom_list = "{}".format(str_in).split(sep=UtxoId.divider)
         return cls(txid=utxo_id_atom_list[0], n=int(utxo_id_atom_list[1]))
-    
+
+
+class ScriptPubKey:
+    """=== Class name: ScriptPubKey ====================================================================================
+    Data collection to store ScriptPubKey data
+    ============================================================================================== by Sziller ==="""
+    ccn = inspect.currentframe().f_code.co_name
+
+    def __init__(self, spk_asm: str, spk_hex: str, spk_reqSigs: int, spk_type: str, spk_addresses: list, **kwargs):
+        self.asm: str               = spk_asm
+        self.hex: str               = spk_hex
+        self.reqSigs: int           = spk_reqSigs
+        self.type: str              = spk_type
+        self.addresses: list[str]   = spk_addresses
+
+    @classmethod
+    def construct(cls, **d_in):
+        """=== Classmethod: construct ==================================================================================
+        Input necessary class parameters to instantiate object of the class!
+        @param d_in: dict - format data to instantiate new object
+        @return: an instance of the class
+        ========================================================================================== by Sziller ==="""
+        return cls(spk_asm=d_in['asm'],
+                   spk_hex=d_in['hex'],
+                   spk_reqSigs=d_in['reqSigs'],
+                   spk_type=d_in['type'],
+                   spk_addresses=d_in['addresses'])
+
 
 class Utxo:
     """=== Class name: Utxo ============================================================================================
+    Object to represent a UTXO inside the code. Not to be used in the DB.
     ============================================================================================== by Sziller ==="""
     ccn = inspect.currentframe().f_code.co_name
     
-    def __init__(self, utxo_id: UtxoId):
+    def __init__(self, utxo_id: UtxoId, value: float = 0.0, scriptPubKey: (ScriptPubKey or None) = None, **kwargs):
         self.utxo_id: UtxoId                    = utxo_id
-        self.separator = UtxoId.divider
-        utxo_id_atom_list                       = "{}".format(self.utxo_id).split(sep=self.separator)
-        self.txid: str                          = utxo_id_atom_list[0]
-        self.n: int                             = int(utxo_id_atom_list[1])
-        self.value: float                       = 0.0
-        self.scriptPubKey: ScriptPubKey or None = None
+        self.txid: str                          = self.utxo_id.txid
+        self.n: int                             = self.utxo_id.n
+        self.value: float                       = value
+        self.scriptPubKey: ScriptPubKey or None = scriptPubKey
 
     def data(self):
         """actual dictionary to be returned"""
@@ -54,59 +80,42 @@ class Utxo:
                 'n':            self.n,
                 'txid':         self.txid,
                 'value':        self.value,
-                'scriptPubKey': self.scriptPubKey}
+                'scriptPubKey': self.scriptPubKey.__dict__}
 
-    @classmethod
-    def construct(cls, d_in):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
-        @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        return cls(**d_in)
-    
-    def set_attributes(self, d_in):
-        for param, attr in d_in.items():
-            setattr(self, param, attr)
-    
     def return_db_inputdict(self):
         """=== Method name: return_db_inputdict ========================================================================
         ========================================================================================== by Sziller ==="""
-        d_in = self.data()
-        return {"n": d_in["n"],
-                "txid": d_in["txid"],
-                "value": d_in["value"],
-                "addresses": d_in["scriptPubKey"]["addresses"],
-                "scriptPubKey_hex": d_in["scriptPubKey"]["hex"],
-                "scriptPubKey_asm": d_in["scriptPubKey"]["asm"],
-                "reqSigs": d_in["scriptPubKey"]["reqSigs"],
-                "scriptType": d_in["scriptPubKey"]["type"]}
-    
-    
-class ScriptPubKey:
-    """=== Class name: ScriptPubKey ====================================================================================
-    ============================================================================================== by Sziller ==="""
-    ccn = inspect.currentframe().f_code.co_name
-    
-    def __init__(self, spk_ams: str, spk_hex: str, spk_reqSigs: int, spk_type: str, spk_addresses: list):
-        self.asm: str               = spk_ams
-        self.hex: str               = spk_hex
-        self.reqSigs: int           = spk_reqSigs
-        self.type: str              = spk_type
-        self.addresses: list[str]   = spk_addresses
+        return {"n": self.n,
+                "txid": self.txid,
+                "value": self.value,
+                "addresses": self.scriptPubKey.addresses,
+                "scriptPubKey_hex": self.scriptPubKey.hex,
+                "scriptPubKey_asm": self.scriptPubKey.asm,
+                "reqSigs": self.scriptPubKey.reqSigs,
+                "scriptType": self.scriptPubKey.type}
 
     @classmethod
-    def construct(cls, d_in):
+    def construct(cls, utxo_id_obj: UtxoId, **d_in):
         """=== Classmethod: construct ==================================================================================
         Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
+        :param d_in: dict - format data to instantiate new object
+        :param unit_used: str - unit to be stored values in, and be used as base data during project
         @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        return cls(spk_ams=d_in['ams'],
-                   spk_hex=d_in['hex'],
-                   spk_reqSigs=d_in['reqSigs'],
-                   spk_type=d_in['type'],
-                   spk_addresses=d_in['addresses'])
+        ========================================================================================== by Sziller ===
+         """
+        scriptPuKey_obj = ScriptPubKey.construct(**d_in['scriptPubKey'])
+        return cls(utxo_id=utxo_id_obj, value=d_in['value'], scriptPubKey=scriptPuKey_obj)
+
+    @classmethod
+    def construct_from_flat_inputdict(cls, utxo_id_obj: UtxoId, **d_in):
+        scriptPuKey_obj = ScriptPubKey(**{"spk_hex": d_in["scriptPubKey_hex"],
+                                          "spk_asm": d_in["scriptPubKey_asm"],
+                                          "spk_reqSigs": d_in["reqSigs"],
+                                          "spk_type": d_in["scriptType"],
+                                          "spk_addresses": d_in["addresses"] })
+        return cls(utxo_id=utxo_id_obj, value=d_in['value'], scriptPubKey=scriptPuKey_obj)
+    
+    
 
 
 class PrivateKey:
