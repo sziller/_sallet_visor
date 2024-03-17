@@ -81,6 +81,10 @@ class Utxo:
                 'txid':         self.txid,
                 'value':        self.value,
                 'scriptPubKey': self.scriptPubKey.__dict__}
+    
+    def __repr__(self):
+        """Redefinition of the built-in method"""
+        return str(self.data())
 
     def return_db_inputdict(self):
         """=== Method name: return_db_inputdict ========================================================================
@@ -114,8 +118,6 @@ class Utxo:
                                           "spk_type": d_in["scriptType"],
                                           "spk_addresses": d_in["addresses"] })
         return cls(utxo_id=utxo_id_obj, value=d_in['value'], scriptPubKey=scriptPuKey_obj)
-    
-    
 
 
 class PrivateKey:

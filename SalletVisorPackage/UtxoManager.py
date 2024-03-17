@@ -29,15 +29,14 @@ class UTXOManager:
     # Current Class Name
     ccn = inspect.currentframe().f_code.co_name  # current class name
     
-    def __init__(self, node: BtcNode or None = None, root_path="./", dotenv_name=".env", session_in=False):
+    def __init__(self, node: BtcNode or None = None, dotenv_path="./.env", session_in=False):
         lg.info("__init__  : {:>60}".format(self.ccn))
         self.node: (BtcNode, None)          = node
-        self.root_path: str                 = root_path
-        self.dotenv_path: str               = self.root_path + dotenv_name
+        self.dotenv_path: str               = dotenv_path
         load_dotenv(dotenv_path=self.dotenv_path)
         self.unit_used: str                 = os.getenv("UNIT_USE")
         if not session_in:
-            self.session                    = sqla.createSession(db_path=self.root_path + os.getenv("DB_PATH_UTXO"),
+            self.session                    = sqla.createSession(db_path=os.getenv("DB_PATH_UTXO"),
                                                                  style=os.getenv("DB_STYLE_UTXO"),
                                                                  tables=[sqla.Utxo.__table__])
         else:
@@ -79,12 +78,17 @@ class UTXOManager:
         :param unit_src: str - name ot the unit used in the soure data
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
+        lg.info("update    : self.utxo_obj_dict() from yaml by ID-set: {}".format(cmn))
         if self.node:
+            lg.info("node      : {}".format(self.node))
             yaml_read_in_utxo_id_set = self.read_yaml(mode="utxo_id_set")
+            lg.debug("read yaml : collected utxo ID set")
             self.utxo_obj_dict: dict = {}
+            lg.debug("reset     : self.utxo_obj_dict")
             for _ in yaml_read_in_utxo_id_set:
                 utxo_id_obj = models.UtxoId.construct_from_string(_)
                 tx = self.node.nodeop_getrawtransaction(tx_hash=utxo_id_obj.txid, verbose=True)
+                lg.debug("read tx   : from node - {}".format(self.node))
                 # Mind if Node under your control answers different syntax dictionary
                 utxo_data = tx['vout'][utxo_id_obj.n]
                 utxo_data["value"] = int(units.bitcoin_unit_converter(
@@ -93,6 +97,8 @@ class UTXOManager:
                     unit_out=self.unit_used))
                 self.utxo_obj_dict[utxo_id_obj.__repr__()] = (
                     models.Utxo.construct(utxo_id_obj=utxo_id_obj, **utxo_data))
+                lg.debug("instant.ed: Uxto() object with converted units: {} -> {}".format(unit_src, self.unit_used))
+            lg.debug("returning : self.utxo_obj_dict - {}".format(cmn))
             return self.utxo_obj_dict
         else:
             msg = "not found : Node not defined! - says {}.{}".format(self.ccn, cmn)
@@ -112,12 +118,44 @@ class UTXOManager:
         :param unit_src: str - name ot the unit used in the soure data
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
+        lg.info("update    : self.utxo_obj_dict() from yaml by Utxo data: {}".format(cmn))
         yaml_read_in_utxo_set = self.read_yaml(mode="utxo_set")
         self.utxo_obj_dict: dict = {}
+        lg.debug("reset     : self.utxo_obj_dict")
         for _ in yaml_read_in_utxo_set:
             _["value"] = units.bitcoin_unit_converter(value=_["value"], unit_in=unit_src, unit_out=self.unit_used)
             utxo_id_obj = models.UtxoId.construct_from_string(_['utxo_id'])
             self.utxo_obj_dict[utxo_id_obj.__repr__()] = models.Utxo.construct(utxo_id_obj=utxo_id_obj, **_)
+            lg.debug("instant.ed: Uxto() object with converted units: {} -> {}".format(unit_src, self.unit_used))
+        lg.debug("returning : self.utxo_obj_dict - {}".format(cmn))
+        return self.utxo_obj_dict
+    
+    def task_update_int_utxo_set_by_utxo_set_flat_yaml(self, unit_src: str) -> dict:
+        """=== Method name: task_update_int_utxo_set_by_utxo_set_flat_yaml =============================================
+        Method reads a yaml file containing a list of Utxo data in string format and updates (or createds) the set of
+        Utxo-s (this is a flat data representation):
+        Step 1. importing list of stings
+        Step reseting self.utxo_obj_dict
+        Step 3. loop:
+                1. turning strings into Utxo data dictionaries
+                2. isntantiating Utxo (using data read)
+                3. adding to self.utxo_obj_dict
+        :param unit_src: str - name ot the unit used in the soure data
+        ========================================================================================== by Sziller ==="""
+        cmn = inspect.currentframe().f_code.co_name  # current method name
+        lg.info("update    : self.utxo_obj_dict() from yaml by Utxo data: {}".format(cmn))
+        yaml_read_in_utxo_set = self.read_yaml(mode="utxo_set_flat")
+        self.utxo_obj_dict: dict = {}
+        lg.debug("reset     : self.utxo_obj_dict")
+        for _ in yaml_read_in_utxo_set:
+            _["value"] = units.bitcoin_unit_converter(value=_["value"], unit_in=unit_src, unit_out=self.unit_used)
+            # flat data storage does not include a separate utxo_id column, so it cannot directly be read-out
+            # it is constructed
+            utxo_id_obj = models.UtxoId.construct_from_string("{}{}{}".format(_['txid'], models.UtxoId.divider, _['n']))
+            self.utxo_obj_dict[utxo_id_obj.__repr__()] = models.Utxo.construct_from_flat_inputdict(
+                utxo_id_obj=utxo_id_obj, **_)
+            lg.debug("instant.ed: Uxto() object with converted units: {} -> {}".format(unit_src, self.unit_used))
+        lg.debug("returning : self.utxo_obj_dict - {}".format(cmn))
         return self.utxo_obj_dict
         
     def task_update_int_utxo_set_by_db(self, unit_src: str) -> dict:
@@ -132,14 +170,18 @@ class UTXOManager:
         :param unit_src: str - name ot the unit used in the soure data
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
+        lg.info("update    : self.utxo_obj_dict() from DB by Utxo data: {}".format(cmn))
         utxo_set_data = self.read_db()
         self.utxo_obj_dict: dict = {}
+        lg.debug("reset     : self.utxo_obj_dict")
         for _ in utxo_set_data:
             utxo_id_obj = models.UtxoId.construct_from_string(_['utxo_id'])
             _['utxo_id'] = utxo_id_obj
             _["value"] = units.bitcoin_unit_converter(value=_["value"], unit_in=unit_src, unit_out=self.unit_used)
             self.utxo_obj_dict[utxo_id_obj.__repr__()] = models.Utxo.construct_from_flat_inputdict(
                 utxo_id_obj=utxo_id_obj, **_)
+            lg.debug("instant.ed: Uxto() object with converted units: {} -> {}".format(unit_src, self.unit_used))
+        lg.debug("returning : self.utxo_obj_dict - {}".format(cmn))
         return self.utxo_obj_dict
 
     # UTXO reading methods                                                                          -   ENDED   -
@@ -150,6 +192,7 @@ class UTXOManager:
         """=== Method name: task_export_int_utxo_to_db =================================================================
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
+        lg.info("export    : self.utxo_obj_dict() to DB as Utxo data: {}".format(cmn))
         dict_for_export = []
         for obj in self.utxo_obj_dict.values():
             _ = obj.return_db_inputdict()
@@ -161,29 +204,37 @@ class UTXOManager:
                                db_table="utxoset",
                                session_in=export_session)
     
-    def task_export_int_utxo_to_yaml(self, unit_trg: str, mode: str = "utxo_set", fullfilename: str = "./utxo-set.yaml"):
+    def task_export_int_utxo_to_yaml(self, fullfilename: str, unit_trg: str, mode: str = "utxo_set"):
         """=== Method name: write_yaml =================================================================================
-        Method writes data to yaml file.
+        Method writes data to yaml file. Filename, content type and synntax to be defined.
+        :param fullfilename: str - full path and filename of target yaml file, data to be exported to.
+        :param unit_trg: str - name of the bitcoin unit yaml file should store
+        :param mode: str - content type and syntax flag of yaml file
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current class name
 
         if mode in list(self.path_map.keys()):
-            yaml_path = self.root_path + os.getenv(self.path_map[mode])
-            yaml_path = "./TEST_yaml.yaml"
+            yaml_path = fullfilename
             if mode == "utxo_set_flat":
+                lg.info("export    : self.utxo_obj_dict() to yaml as flat Utxo data: {}".format(cmn))
                 data_to_dump = [_.return_db_inputdict() for _ in self.utxo_obj_dict.values()]  # compressed as in DB
             elif mode == "utxo_set":
+                lg.info("export    : self.utxo_obj_dict() to yaml as hierarchical Utxo data: {}".format(cmn))
                 data_to_dump = [_.data() for _ in self.utxo_obj_dict.values()]  # uncompressed as on Node
             elif mode == "utxo_id_set":
+                lg.info("export    : self.utxo_obj_dict() to yaml as Utxo-ID set: {}".format(cmn))
                 data_to_dump = [_ for _ in self.utxo_obj_dict.keys()]  # ID's only in list (TX-outpoints)
             else:
                 msg = "<mode> = '{}' not implemented yet! - says {}.{}".format(mode, self.ccn, cmn)
                 lg.critical(msg)
                 raise Exception(msg)
-            for _ in data_to_dump:
-                _["value"] = units.bitcoin_unit_converter(value=_["value"], unit_in=self.unit_used, unit_out=unit_trg)
-            with open(yaml_path, 'w') as outfile:
-                yaml.dump(data_to_dump, outfile, default_flow_style=False)
+            if mode in ["utxo_set_flat", "utxo_set"]:
+                for _ in data_to_dump:
+                    _["value"] = units.bitcoin_unit_converter(value=_["value"],
+                                                              unit_in=self.unit_used,
+                                                              unit_out=unit_trg)
+            lg.info("export to : {}".format(yaml_path))
+            self.write_yaml(fullfilename=yaml_path, data=data_to_dump)
         else:
             msg = "<mode> = '{}' unrecognized! - says {}.{}".format(mode, self.ccn, cmn)
             lg.critical(msg)
@@ -198,6 +249,23 @@ class UTXOManager:
     # - Collection of DATA handling scripts - simple methods                            -   START       -
     # ---------------------------------------------------------------------------------------------------
     
+    def write_yaml(self, data, fullfilename: str) -> bool:
+        """=== Method name: write_yaml =================================================================================
+        Basic script to dump yaml data to file.
+        ATTENTION! Fail to save will NOT raise an error, it will only return a CRITICAL log error.
+        :param fullfilename: str - fullpath + filename to sava data to.
+        :param data: any kind of data fit to be stored as yaml.
+        :return: True if succeeded, False otherwise
+        ========================================================================================== by Sziller ==="""
+        cmn = inspect.currentframe().f_code.co_name  # current class name
+        try:
+            with open(fullfilename, 'w') as outfile:
+                yaml.dump(data, outfile, default_flow_style=False)
+        except:
+            msg = "ATTENTION : yaml save failed! - says {} at {}".format(cmn, self.ccn)
+            lg.critical(msg)
+        return True
+        
     def read_yaml(self, mode: str = "utxo") -> list:
         """=== Method name: read_yaml ==================================================================================
         Method reads in data from yaml file and returns it. We do not store Data read from yaml as there can be many
@@ -206,9 +274,8 @@ class UTXOManager:
         - set of utxo's
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
-
         if mode in list(self.path_map.keys()):
-            yaml_path = self.root_path + os.getenv(self.path_map[mode])
+            yaml_path = os.getenv(self.path_map[mode])
             with open(yaml_path, 'r') as stream:
                 try:
                     lg.info("read in   : {}-set from {}\n - says {}".format(mode, yaml_path, self.ccn))
@@ -264,7 +331,7 @@ class UTXOManager:
         for obj in self.utxo_obj_dict.values():
             address_list += obj.scriptPubKey.addresses
         return set(address_list)
-            
+    
     def return_balance_by_addresslist(self, addresses: set or None = None) -> dict:
         """=== Method name: return_balance_by_address ==================================================================
         ATTENTION, only working with single address UTXO's properly.
@@ -281,40 +348,7 @@ class UTXOManager:
 
 
 if __name__ == "__main__":
-    # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
-    logging.basicConfig(filename="../log/UtxoManager.log", level=logging.NOTSET, filemode="w",
-                        format="%(asctime)s [%(levelname)8s]: %(message)s", datefmt='%y%m%d %H:%M:%S')
-    lg.warning("START: {:>85} <<<".format('__name__ == "__main__" namespace: UtxoManager.py'))
-    node = BtcNode.Node(alias="sziller", is_rpc=True)
-    mngr = UTXOManager(node=node, dotenv_name=".env", root_path="../")
-    
-    # -------------------------------------------------------------------------------------------------------
-    # - Testing: UTXOManager                                                                    -   START   -
-    # -------------------------------------------------------------------------------------------------------
-    
-    mngr.task_update_int_utxo_set_by_db(unit_src="btc")
-    lg.info(mngr.return_balance_by_addresslist(addresses=
-                                               # {'1Ett9x7n37pth8yXZ2RW3EfprrWe6MPqsj'}
-                                               None))
-    lg.info(mngr.return_total_balance())
-
-    # summarize(UTXO)
-
-    # uncomment:
-    # from btc_sziller_Class_package import BaseClasses as BC
-    #
-    # counter_spec = 0
-    # counter_all = 0
-    # act_addr = "19zohsYZfQX6TG9FjCeD8FW21q3yHj6KWA"
-    # for _ in UTXO:
-    #     counter_all += 1
-    #     if _['address'] == act_addr: counter_spec += 1
-    #
-    # amount_list_spec = [_["sat_value"] for _ in UTXO if _["address"] == act_addr]
-    # amount_list_all = [_["sat_value"] for _ in UTXO]
-    # amount_spec = sum(amount_list_spec)
-    # amount_all = sum(amount_list_all)
-    # print("Nr of UTXO for address {:>40} - {}".format(act_addr, counter_spec))
-    # print("Nr of UTXO in set      {:>40} - {}".format(" ", counter_all))
-    # print("Balance of address     {:>40} - {}".format(act_addr, int(BC.bitcoin_unit_converter(value=amount_spec, unit_in='btc', unit_out="sat"))))
-    # print("Balance of UTXOset     {:>40} - {}".format(" ", int(BC.bitcoin_unit_converter(value=amount_all, unit_in='btc', unit_out="sat"))))
+    # instead of locally testing behaviour manually, we use the mngr_* files for manual testing in order to keep
+    # namespace in root directory.
+    # Refer to: mngr_utxomanager.py
+    pass
