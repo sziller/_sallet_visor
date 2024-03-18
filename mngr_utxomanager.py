@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # - Testing: UTXOManager                                                                    -   START   -
     # -------------------------------------------------------------------------------------------------------
 
-    mngr.task_update_int_utxo_set_by_utxo_set_flat_yaml(unit_src="btc")
+    mngr.task_update_int_utxo_set_by_utxo_id_set_yaml(unit_src="btc")
     lg.info(mngr.return_balance_by_addresslist(addresses=
                                                # {'1Ett9x7n37pth8yXZ2RW3EfprrWe6MPqsj'}
                                                None))
