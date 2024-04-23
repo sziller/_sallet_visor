@@ -3,6 +3,9 @@ SQLAlchemy powered DB handling test, and production code.
 you should be able to swap DB handling while using this SQLi from SQLite to PostgreSQL.
 by Sziller
 """
+
+# ADD LOGGING!!!
+
 import os
 import random as rnd
 from SalletBasePackage import models
@@ -20,6 +23,11 @@ Base = declarative_base()
 
 def createSession(db_path: str, tables: list or None = None, style: str = "SQLite", base=Base):
     """=== Function name: createSession ================================================================================
+    Setting up a session to handle SQL DB operations.
+    :param db_path: str - name of the DB
+    :param tables: list - of __table__ parameters of each table representing class to be created on session init
+    :param style: str - whether "SQLite" or "PostgreSQL"
+    :return: a session object
     ============================================================================================== by Sziller ==="""
     if style == "SQLite":
         engine = create_engine('sqlite:///%s' % db_path, echo=False, poolclass=NullPool)
@@ -327,13 +335,12 @@ def QUERY_entire_table(ordered_by: str,
                        row_obj: Base,
                        session: sessionmaker.object_session) -> list:
     """=== Function name: QUERY_entire_table =========================================================================
-    Function returns an entire DB table, defined by args.
-    This function deals with the entered DB Table!!!
-    @param ordered_by:
-    @param db_table: str - name of the table you want to write
-    @param session_in: obj - a precreated session. If used, it will not be closed. If not entered, a new session is
+    SQL action. You use the session entered. Function returns the entire DB table defined by <row_obj>.
+    :param ordered_by: str -
+    :param row_obj: str - name of the table you want to write
+    :param session: obj - a precreated session. If used, it will not be closed. If not entered, a new session is
                                                     created, which is closed at the end.
-    @return: list of rows in table requested.
+    :return: list of rows of the table requested
     ========================================================================================== by Sziller ==="""
     results = session.query(row_obj).order_by(ordered_by).all()
     result_list = [_.return_as_dict() for _ in results]
