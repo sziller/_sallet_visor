@@ -1,7 +1,7 @@
 """Basic DB actions. Mostly one-time processes."""
 
 import os
-from SalletBasePackage import SQL_interface as sql
+from SalletSqlPackage import SQL_interface as sql
 from dotenv import load_dotenv
 
 if __name__ == "__main__":

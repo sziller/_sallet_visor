@@ -1,7 +1,6 @@
 """
 SQLAlchemy powered DB handling test, and production code.
-We hope to swap DB handling while using Alchemy from SQLite to PostgreSQL.
-Present implementation servers both current SQLight and all development steps along the way.
+you should be able to swap DB handling while using this SQLi from SQLite to PostgreSQL.
 by Sziller
 """
 import os
@@ -193,9 +192,9 @@ class MDPrvKey(Base):
 # CLASS definitions ENDED                                                                   -   ENDED   -
 # CLASS assignment to tables START                                                          -   START   -
 load_dotenv()
-OBJ_KEY = {os.getenv("DB_ID_TABLE_UTXO"):   Utxo,
-           os.getenv("DB_ID_TABLE_SECRET"): MDPrvKey,
-           os.getenv("DB_ID_TABLE_NODE"):   Node
+OBJ_KEY = {'utxoset':   Utxo,
+           'mdprvkeys': MDPrvKey,
+           'nodes':     Node
            }
 # CLASS assignment to tables ENDED                                                          -   ENDED   -
 
@@ -274,8 +273,6 @@ def MODIFY_multiple_rows_by_column_to_value(
         target_key: str,
         target_value,
         db_table: str,
-        db_path: str    = "",
-        style: str      = "",
         session_in: object or None = None):
     """=== Function name: db_REC_modify_multiple_rows_by_column_to_value ===============================================
     USE THIS IF THE NEW VALUES THE CELLS MUST TAKE ARE IDENTICAL!!!
@@ -351,8 +348,6 @@ def QUERY_rows_by_column_filtervalue_list_ordered(filterkey: str,
                                                   filtervalue_list: list,
                                                   ordered_by: str,
                                                   db_table: str,
-                                                  db_path: str = "",
-                                                  style: str = "",
                                                   session_in: object or None = None) -> list:
 
     """=== Function name: QUERY_rows_by_column_filtervalue_list_ordered =============================================

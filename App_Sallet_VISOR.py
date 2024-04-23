@@ -15,8 +15,9 @@ from kivy.uix.image import AsyncImage
 from pyzbar import pyzbar
 from kivy.graphics.texture import Texture
 
-from SalletBasePackage.WidgetClasses import *
-from SalletBasePackage import SQL_interface as sql, models
+from SalletAppPackage.WidgetClasses import *
+from SalletBasePackage import models
+from SalletSqlPackage import SQL_interface as sql
 from SalletVisorPackage import UtxoManager as UtxoMan
 from SalletBasePackage import units
 from DataVisualizer.data2str import rdf
@@ -734,7 +735,8 @@ class SalletVISOR(App):
         for screen_name, screen_obj in self.root.ids.items():
             for widget_name, widget_obj in screen_obj.ids.items():
                 if widget_name.startswith("oparea_"):
-                    widget_obj.on_init()
+                    # widget_obj.on_init()
+                    pass
         # --- Initiating each OpArea's <on_init> methods                                        ENDED   -
 
         # --- Navigation-button handling                                                        START   -

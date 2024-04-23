@@ -280,21 +280,31 @@ class Node(object):
         tx = TXobj.parse(hxstr)
         return tx.outputs[tx_outpoint.n].value
             
-    def nodeop_get_utxo_id_set_with_address(self, address_list):
-        """
-        
-        :param address: 
-        :return: 
-        """
+    def nodeop_get_utxo_set_by_addresslist(self, address_list) -> dict:
+        """=== Method name: nodeop_get_utxo_set_by_addresslist =========================================================
+        Method searches through local UtxoSet and returns those Utxo-s, referring to addresses shown in <address_list>.
+        Data is returned as answered by the Node
+        :param address_list: list - or addresses in Base58 format
+        :return: dict - of Utxo data referring to addresses in question
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         if self.is_rpc:
+            command = "scantxoutset"
+            lg.info("starting  : UtxoSet processing - {} at {}".format(cmn, self.ccn))
+            formatted_list = ['addr({})'.format(_) for _ in address_list]  # syntax used by BitcoinCore
+            lg.debug("converted : list to BitcoinCore request format for command: '{}'".format(command))
             serverURL = self.rpc_url()
             OneReq = RPCHost.RPCHost(url=serverURL)
-            resp = OneReq.call('scantxoutset', 'start', ['addr(18My7aToHGUhptu3CbrivFBw6GLgFoNJMQ)'])
-            print(resp)
-            lg.info(resp)
+            if OneReq.call(command, 'status'):
+                lg.warning("aborting  : UtxoSet scan still active - trying to shoot down")
+                OneReq.call(command, 'abort')
+            lg.warning("running...: UtxoSet scan might take several minutes... be patient!")
+            resp = OneReq.call(command, 'start', formatted_list)
+            lg.info("returned  : UtxoSet scan result!")
+            lg.debug("    {}".format(resp))
+            return resp
         else:
-            msg = "".format(cmn, self.ccn)
+            msg = "Method only usable as RPC call".format(cmn, self.ccn)
             lg.critical(msg)
             raise Exception(msg)
     

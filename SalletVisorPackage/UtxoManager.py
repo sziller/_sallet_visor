@@ -8,7 +8,8 @@ import yaml
 import logging
 import inspect
 from dotenv import load_dotenv
-from SalletBasePackage import SQL_interface as sqla, models
+from SalletBasePackage import models
+from SalletSqlPackage import SQL_interface as sqla
 from SalletBasePackage import units
 from SalletNodePackage import BitcoinNodeObject as BtcNode
 
@@ -62,6 +63,21 @@ class UTXOManager:
     # - yaml file containing full UTXO data
     # - yaml file containing utxo ID's
     # - sqlite db containing fill UTXO data
+    
+    def task_return_utxo_set_by_addresslist(self, address_list: list, testdict: dict or None = None) -> set:
+        """=== Method name: task_return_utxo_set_by_addresslist ========================================================
+        A ONE TIME and QUITE TIME consuming script:
+        :param address_list: list - of addresses in string format, in Base58 representation
+        :param testdict: dict
+        ========================================================================================== by Sziller ==="""
+        cmn = inspect.currentframe().f_code.co_name  # current method name
+        if not testdict:
+            filtered_utxo_set_data: dict = self.node.nodeop_get_utxo_set_by_addresslist(address_list=address_list)
+        else:
+            filtered_utxo_set_data: dict = testdict
+        utxo_id_list = ["{}{}{}".format(_['txid'], models.UtxoId.divider, _['vout'])
+                        for _ in filtered_utxo_set_data['unspents']]
+        return set(utxo_id_list)
     
     def task_update_int_utxo_set_by_utxo_id_set_yaml(self, unit_src: str = "btc") -> dict:
         """=== Method name: task_update_internal_utxo_set_by_utxo_id_set_yaml ==========================================

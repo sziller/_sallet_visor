@@ -7,7 +7,7 @@ import os
 import inspect
 import logging
 from dotenv import load_dotenv
-from SalletBasePackage import SQL_interface as sqla, models
+from SalletSqlPackage import SQL_interface as sqla
 from SalletNodePackage.BitcoinNodeObject import Node
 lg = logging.getLogger(__name__)
 lg.info("START     : {:>85} <<<".format('NodeManager.py'))

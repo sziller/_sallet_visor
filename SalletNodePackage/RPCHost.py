@@ -62,3 +62,20 @@ class RPCHost(object):
 
 if __name__ == "__main__":
     pass
+    
+    from dotenv import load_dotenv
+    load_dotenv()
+    from lightning.lightning import LightningRpc
+    import os
+
+    rpcIP = os.getenv("RPC_IP")
+    rpcUser = os.getenv("RPC_USER")
+    rpcPassword = os.getenv("RPC_PSSW")
+    rpcPort = os.getenv("RPC_PORT")
+
+    string = "http://{}:{}@{}:{}".format(rpcUser, rpcPassword, rpcIP, rpcPort)
+    print(string)
+
+    rpc = RPCHost(string)
+    print(rpc.call("getconnectioncount"))
+    
