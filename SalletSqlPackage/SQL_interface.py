@@ -201,34 +201,33 @@ OBJ_KEY = {'utxoset':   Utxo,
 
 def ADD_rows_to_table(primary_key: str,
                       data_list: list,
-                      db_table: str,
-                      session_in: object):
-    """
-    @param primary_key: 
-    @param data_list: 
-    @param db_table: 
-    @param session_in: 
-    @return: 
-    """
-    
-    session = session_in
+                      row_obj: Base,
+                      session: sessionmaker.object_session):
+    """=== Function name: ADD_rows_to_table ============================================================================
+    SQL action. You use the session entered. Function simply fills in data represented in <data_list> into DB defined
+    by <session_in>. Function will try to enter data into the Table defined by <row_obj>.
+    ATTENTION: function does NOT close the session at the end! - you can continue using it.
+    :param primary_key: str - the primary key of the row, defined by row_obj
+    :param data_list: list[dict] row information in list of dictionaries format
+    :param row_obj: Base - on of the row defining objects of this module
+    :param session: session obj.
+    :return: list of primary keys - actually added
+    ============================================================================================== by Sziller ==="""
     added_primary_keys = []
-    global OBJ_KEY
-    RowObj = OBJ_KEY[db_table]
     for data in data_list:
         # there are cases:
         # - a. when primary key exists before instance being added to DB
         # - b. primary key is generated from other incoming data on instantiation
         if primary_key in data:  # a.: works only if primary key is set and included in row to be created!
-            if not session.query(RowObj).filter(getattr(RowObj, primary_key) == data[primary_key]).count():
-                newrow = RowObj.construct(d_in=data)
+            if not session.query(row_obj).filter(getattr(row_obj, primary_key) == data[primary_key]).count():
+                newrow = row_obj.construct(d_in=data)
                 session.add(newrow)
                 added_primary_keys.append(data[primary_key])
         else:
             # this is the general case. <data> doesn't need to include primary key:
             # we check if primary key having been generated on instantiation exists.
-            newrow = RowObj.construct(d_in=data)
-            if not session.query(RowObj).filter(getattr(RowObj, primary_key) == getattr(newrow, primary_key)).count():
+            newrow = row_obj.construct(d_in=data)
+            if not session.query(row_obj).filter(getattr(row_obj, primary_key) == getattr(newrow, primary_key)).count():
                 session.add(newrow)
     session.commit()
     return added_primary_keys
@@ -250,20 +249,21 @@ def drop_table(table_name, engine):
 
 def db_delete_multiple_rows_by_filterkey(filterkey: str,
                                          filtervalue_list: list,
-                                         db_table: str,
-                                         session_in: object or None = None):
-    """=== Function name: db_delete_multiple_docs_by_key ==============================================================
-    @param filterkey: str - name of row's attribute
-    @param filtervalue_list: list - list of values of rows to be deleted
-    @param db_table: str - the actual DataBase name the engine uses. Different for SQLite and PostGreSQL
-    @param session_in: str - to distinguish path handling, enter DB style : PostGreSQL or SQLite
-    @return:
+                                         row_obj: Base,
+                                         session: sessionmaker.object_session):
+    """=== db_delete_multiple_rows_by_filterkey ========================================================================
+    SQL action. You use the session entered. Function deletes rows, whoes <filterkey> colum's value is included in
+    <filtervalue_list>. Function will try to delete data from the Table defined by <row_obj>.
+    ATTENTION: function does NOT close the session at the end! - you can continue using it.
+    :param filterkey: str - the key whoes values must be included in <filtervalue_list> in order for the parent row
+                            to get deleted
+    :param filtervalue_list: list - of values
+    :param row_obj: Base - on of the row defining objects of this module
+    :param session: session obj.
+    :return:
     ============================================================================================== by Sziller ==="""
-    session = session_in
-    global OBJ_KEY
-    RowObj = OBJ_KEY[db_table]
     for filtervalue in filtervalue_list:
-        session.query(RowObj).filter(getattr(RowObj, filterkey) == filtervalue).delete(synchronize_session=False)
+        session.query(row_obj).filter(getattr(row_obj, filterkey) == filtervalue).delete(synchronize_session=False)
     session.commit()
 
 
@@ -324,8 +324,8 @@ def MODIFY_multiple_rows_by_column_by_dict(filterkey: str,
 
 
 def QUERY_entire_table(ordered_by: str,
-                       db_table: str,
-                       session_in: object or None = None) -> list:
+                       row_obj: Base,
+                       session: sessionmaker.object_session) -> list:
     """=== Function name: QUERY_entire_table =========================================================================
     Function returns an entire DB table, defined by args.
     This function deals with the entered DB Table!!!
@@ -335,10 +335,7 @@ def QUERY_entire_table(ordered_by: str,
                                                     created, which is closed at the end.
     @return: list of rows in table requested.
     ========================================================================================== by Sziller ==="""
-    session = session_in
-    global OBJ_KEY
-    RowObj = OBJ_KEY[db_table]
-    results = session.query(RowObj).order_by(ordered_by).all()
+    results = session.query(row_obj).order_by(ordered_by).all()
     result_list = [_.return_as_dict() for _ in results]
     session.commit()
     return result_list

@@ -1,7 +1,7 @@
 """Basic DB actions. Mostly one-time processes."""
 
 import os
-from SalletSqlPackage import SQL_interface as sql
+from SalletSqlPackage import SQL_interface as sqli
 from dotenv import load_dotenv
 
 if __name__ == "__main__":
@@ -17,14 +17,25 @@ if __name__ == "__main__":
 
     # keys_to_del = ['01aa', '07aa', '08aa', '09aa', '10aa', '11aa', '12aa', '13aa', '14aa', '15aa', '16aa', '17aa', '18aa', '19aa']
 
+
     load_dotenv()
-    session = sql.createSession(db_path=os.getenv("DB_PATH_VISOR"), style=os.getenv("DB_STYLE_VISOR"))
+    session = sqli.createSession(db_path=".test.db", style="SQLite", tables=None)
     
     # sql.db_delete_multiple_rows_by_filterkey(filterkey="hxstr",
     #                                          filtervalue_list=keys_to_del,
     #                                          db_table=os.getenv("DB_ID_TABLE_MD_PRVKEYS"),
     #                                          session_in=session)
 
-    sql.ADD_rows_to_table(primary_key="alias", data_list=keys_to_add, db_table=os.getenv("DB_ID_TABLE_NODE"),
-                          session_in=session)
+    a = sqli.ADD_rows_to_table(primary_key="alias", data_list=keys_to_add, row_obj=sqli.Node, session=session)
+    print(a)
+    print(type(a))
+    
+    sqli.db_delete_multiple_rows_by_filterkey(filterkey="port",
+                                              filtervalue_list=['0', '8333'],
+                                              row_obj=sqli.Node,
+                                              session=session)
+    
+    a = sqli.QUERY_entire_table(ordered_by="alias", row_obj=sqli.Node, session=session)
+    print(a)
+    print(type(a))
     

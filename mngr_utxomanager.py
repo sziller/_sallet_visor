@@ -1,3 +1,8 @@
+"""
+MaNaGeR style script to enable manual testing of classes from __main__ scope
+
+"""
+
 import logging
 import inspect
 import os
