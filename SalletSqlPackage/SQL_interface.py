@@ -4,207 +4,48 @@ you should be able to swap DB handling while using this SQLi from SQLite to Post
 by Sziller
 """
 
-# ADD LOGGING!!!
-
-import os
-import random as rnd
-from SalletBasePackage import models
-
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, MetaData, Column, Integer, String, JSON
+import logging
+import inspect
+from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 
+# Setting up logger                                         logger                      -   START   -
+lg = logging.getLogger()
+# Setting up logger                                         logger                      -   ENDED   -
 
 Base = declarative_base()
+
+# SESSION creation START                                                                    -   START   -
 
 
 def createSession(db_path: str, tables: list or None = None, style: str = "SQLite", base=Base):
     """=== Function name: createSession ================================================================================
     Setting up a session to handle SQL DB operations.
-    :param db_path: str - name of the DB
-    :param tables: list - of __table__ parameters of each table representing class to be created on session init
-    :param style: str - whether "SQLite" or "PostgreSQL"
-    :return: a session object
+    :param db_path: str - name of the DB (or the direct path to it - if PostgreSQL)
+    :param tables: list - of __table__ parameters of each table-representing-class to be created on session init
+    :param style: str - whether "SQLite" or "PostgreSQL" style DB is to be accessed
+    :param base: Base object to be used in session creation
+    :return: a session-object
     ============================================================================================== by Sziller ==="""
+    # Current Function Name
+    cfn = inspect.currentframe().f_code.co_name  # current class name
     if style == "SQLite":
         engine = create_engine('sqlite:///%s' % db_path, echo=False, poolclass=NullPool)
     elif style == "PostGreSQL":
         engine = create_engine(db_path, echo=False, poolclass=NullPool)
     else:
+        lg.critical("not found : '{}' is not a valid <style> value! - says {}()".format(style, cfn))
         raise Exception("no valid dialect defined")
 
     base.metadata.create_all(bind=engine, tables=tables)  # check if always necessary!!!
     Session = sessionmaker(bind=engine)
     return Session()
 
-# CLASS definitions ENDED                                                                   -   START   -
+# SESSION creation ENDED                                                                    -   ENDED   -
 
-
-class Node(Base):
-    """=== Classname: Node(Base) =======================================================================================
-    Class represents a Node Database Entry who's data is to be stored and processed by the DB
-    ============================================================================================== by Sziller ==="""
-    __tablename__ = "nodes"
-    alias: str                      = Column("alias", String, primary_key=True)
-    owner: str                      = Column("owner", String)
-    ip: str                         = Column("ip", String)
-    port: int                       = Column("port", Integer)
-    features: dict                  = Column("features", JSON)
-    desc: str                       = Column("desc", String)
-    is_rpc: bool                    = Column("is_rpc", Integer)
-    
-    def __init__(self,
-                 alias: str,
-                 owner: str,
-                 ip: str,
-                 port: int,
-                 features: dict,
-                 desc: str,
-                 is_rpc: int):
-        self.alias: str     = alias
-        self.owner: str     = owner
-        self.ip: str        = ip
-        self.port: int      = port
-        self.features: dict = features
-        self.desc: str      = desc
-        self.is_rpc: int    = is_rpc
-
-    def return_as_dict(self):
-        """=== Method name: return_as_dict =============================================================================
-        Returns instance as a dictionary
-        @return : dict - parameter: argument pairs in a dict
-        ========================================================================================== by Sziller ==="""
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-    @classmethod
-    def construct(cls, d_in):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
-        @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        return cls(**d_in)
-    
-    
-class Utxo(Base):
-    """=== Classname: Utxo(Base) =======================================================================================
-    Class represents a Utxo Database Entry who's data is to be stored and processed by the DB
-    ============================================================================================== by Sziller ==="""
-    __tablename__ = "utxoset"
-    utxo_id: str                    = Column("utxo_id", String, primary_key=True)
-    n: int                          = Column("n", Integer)
-    txid: str                       = Column("txid", String)
-    value: int                      = Column("value", Integer)
-    addresses: list                 = Column("addresses", JSON)
-    scriptPubKey_hex: str           = Column("scriptPubKey_hex", String)
-    scriptPubKey_asm: str           = Column("scriptPubKey_asm", String)
-    reqSigs: int                    = Column("reqSigs", Integer)
-    scriptType: str                 = Column("scriptType", String)
-
-    def __init__(self,
-                 txid: str,
-                 n: int,
-                 value: int,
-                 addresses: list,
-                 scriptPubKey_hex: str,
-                 scriptPubKey_asm: str,
-                 reqSigs: int,
-                 scriptType: str,
-                 **kwargs):
-        self.txid: str              = txid
-        self.n: int                 = n
-        self.value: int             = value
-        self.addresses: list        = addresses
-        self.scriptPubKey_hex: str  = scriptPubKey_hex
-        self.scriptPubKey_asm: str  = scriptPubKey_asm
-        self.reqSigs: int           = reqSigs
-        self.scriptType: str        = scriptType
-        
-        self.generate_utxo_id()
-    
-    def generate_utxo_id(self):
-        """Function adds a unique ID to the row"""
-        data = models.UtxoId(self.txid, self.n)
-        self.utxo_id = "{}".format(data)
-    
-    def return_as_dict(self):
-        """=== Method name: return_as_dict =============================================================================
-        Returns instance as a dictionary
-        @return : dict - parameter: argument pairs in a dict
-        ========================================================================================== by Sziller ==="""
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-    
-    @classmethod
-    def construct(cls, d_in, **kwargs):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
-        @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        return cls(**d_in)
-    
-
-class MDPrvKey(Base):
-    """=== Class name: MDPrvKey ========================================================================================
-    Table row.
-    ============================================================================================== by Sziller ==="""
-    __tablename__ = "mdprvkeys"  # mdprvkeys
-    hxstr: str                  = Column("hxstr", String, primary_key=True)
-    owner: str                  = Column("owner", String)
-    kind: int                   = Column("kind", Integer)
-    comment: str                = Column("comment", String)
-    root_hxstr: str             = Column("root_hxstr", String)
-    deriv_nr: int               = Column("deriv_nr", Integer)
-
-    def __init__(self,
-                 owner: str,
-                 kind: int = 0,
-                 root_hxstr: str = "",
-                 deriv_nr: int = 0,
-                 hxstr: str = "",
-                 comment: str = "some txt"):
-        self.hxstr: str         = hxstr
-        self.owner: str         = owner
-        self.kind: int          = kind
-        self.comment: str       = comment
-        self.root_hxstr: str    = root_hxstr
-        self.deriv_nr: int      = deriv_nr
-
-        if not self.hxstr:
-            self.generate_hxstr()
-
-    def generate_hxstr(self):
-        """Function adds a unique ID <hxstr> to the row"""
-        self.hxstr = "{:04}".format(rnd.randint(0, 9999))
-    
-    def return_as_dict(self):
-        """=== Method name: return_as_dict =============================================================================
-        Returns instance as a dictionary
-        @return : dict - parameter: argument pairs in a dict
-        ========================================================================================== by Sziller ==="""
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-    
-    @classmethod
-    def construct(cls, d_in):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
-        @return: an instance of the class
-        ========================================================================================== by Sziller ==="""
-        return cls(**d_in)
-
-
-# CLASS definitions ENDED                                                                   -   ENDED   -
-# CLASS assignment to tables START                                                          -   START   -
-load_dotenv()
-OBJ_KEY = {'utxoset':   Utxo,
-           'mdprvkeys': MDPrvKey,
-           'nodes':     Node
-           }
-# CLASS assignment to tables ENDED                                                          -   ENDED   -
+# DB manipulating functions START                                                           -   START   -
 
 
 def ADD_rows_to_table(primary_key: str,
@@ -217,10 +58,12 @@ def ADD_rows_to_table(primary_key: str,
     ATTENTION: function does NOT close the session at the end! - you can continue using it.
     :param primary_key: str - the primary key of the row, defined by row_obj
     :param data_list: list[dict] row information in list of dictionaries format
-    :param row_obj: Base - on of the row defining objects of this module
-    :param session: session obj.
+    :param row_obj: Base - the class attached to the table you want to query
+    :param session: session-obj - a pre-created session. It is NOT closed at the end of the function.
     :return: list of primary keys - actually added
     ============================================================================================== by Sziller ==="""
+    # Current Function Name
+    # cfn = inspect.currentframe().f_code.co_name  # current class name
     added_primary_keys = []
     for data in data_list:
         # there are cases:
@@ -241,107 +84,110 @@ def ADD_rows_to_table(primary_key: str,
     return added_primary_keys
 
 
-def drop_table(table_name, engine):
-    """
-    @param table_name: 
-    @param engine: 
-    @return: 
-    """
-    Base = declarative_base()
-    metadata = MetaData()
-    metadata.reflect(bind=engine)
-    table = metadata.tables[table_name]
-    if table is not None:
-        Base.metadata.drop_all(engine, [table], checkfirst=True)
-
-
-def db_delete_multiple_rows_by_filterkey(filterkey: str,
-                                         filtervalue_list: list,
-                                         row_obj: Base,
-                                         session: sessionmaker.object_session):
-    """=== db_delete_multiple_rows_by_filterkey ========================================================================
+def DELETE_multiple_rows_by_filterkey(filterkey: str,
+                                      filtervalue_list: list,
+                                      row_obj: Base,
+                                      session: sessionmaker.object_session):
+    """=== DELETE_multiple_rows_by_filterkey ===========================================================================
     SQL action. You use the session entered. Function deletes rows, whoes <filterkey> colum's value is included in
     <filtervalue_list>. Function will try to delete data from the Table defined by <row_obj>.
     ATTENTION: function does NOT close the session at the end! - you can continue using it.
     :param filterkey: str - the key whoes values must be included in <filtervalue_list> in order for the parent row
                             to get deleted
-    :param filtervalue_list: list - of values
-    :param row_obj: Base - on of the row defining objects of this module
-    :param session: session obj.
-    :return:
+    :param filtervalue_list: list - of values, one of which the filterkey must take in order for its parent row to be
+                                    subject of this function
+    :param row_obj: Base - the class attached to the table you want to query
+    :param session: session-obj - a pre-created session. It is NOT closed at the end of the function.
+    :return: nothing
     ============================================================================================== by Sziller ==="""
+    # Current Function Name
+    # cfn = inspect.currentframe().f_code.co_name  # current class name
     for filtervalue in filtervalue_list:
         session.query(row_obj).filter(getattr(row_obj, filterkey) == filtervalue).delete(synchronize_session=False)
     session.commit()
 
 
-def MODIFY_multiple_rows_by_column_to_value(
-        filterkey: str,
-        filtervalue_list: list,
-        target_key: str,
-        target_value,
-        db_table: str,
-        session_in: object or None = None):
-    """=== Function name: db_REC_modify_multiple_rows_by_column_to_value ===============================================
-    USE THIS IF THE NEW VALUES THE CELLS MUST TAKE ARE IDENTICAL!!!
-    This function deals with the USERs DB Table!!!
-    @param filterkey: str - name of column, in which filtervalues will be looked for
-    @param filtervalue_list: list - list of values of rows to be deleted
-    @param target_key: str - name of the column, whose value will be modified
-    @param target_value: any data to be put into multiple cell
-    @param db_path: str - the actual DataBase name the engine uses. Different for SQLite and PostGreSQL
-    @param db_table: str - name of the table you want to write
-    @param style: str - to distinguish path handling, enter DB style : PostGreSQL or SQLite
-    @param session_in: obj - a precreated session. If used, it will not be closed. If not entered, a new session is
-                                                    created, which is closed at the end.
-    @return:
+def MODIFY_multiple_rows_by_column_to_value(filterkey: str,
+                                            filtervalue_list: list,
+                                            target_key: str,
+                                            target_value,
+                                            row_obj: Base,
+                                            session: sessionmaker.object_session):
+    """=== Function name: MODIFY_multiple_rows_by_column_to_value ======================================================
+    SQL action. You use the session entered. Function alters DB of all rows, whoes <filterkey>'s current value is
+    represented in <filtervalue_list>.
+    In these rows, the values of <target_keys> will become <target_value> after function is finished.
+    USE THIS TO CHANGE ALL fo the filtered row's target_key's values to ONE specific value: the <target_value>.
+    ATTENTION: function does NOT close the session at the end! - you can continue using it.
+    :param filterkey: str - the key whoes values must be included in <filtervalue_list> in order for the parent row
+                            to get altered
+    :param filtervalue_list: list - of values, one of which the filterkey must take in order for its parent row to be
+                                    subject of this function
+    :param target_key: the name of the column that is subject to the change.
+    :param target_value: the value, the actual row's <target_key> will take, once functon finishes
+    :param row_obj: Base - the class attached to the table you want to query
+    :param session: session-obj - a pre-created session. It is NOT closed at the end of the function.
+    :return: nothing
     ============================================================================================== by Sziller ==="""
-    session = session_in
-    global OBJ_KEY
-    RowObj = OBJ_KEY[db_table]
+    # Current Function Name
+    # cfn = inspect.currentframe().f_code.co_name  # current class name
     for filtervalue in filtervalue_list:
-        session.query(RowObj).filter(getattr(RowObj, filterkey) == filtervalue).update({target_key: target_value})
+        session.query(row_obj).filter(getattr(row_obj, filterkey) == filtervalue).update({target_key: target_value})
     session.commit()
 
 
 def MODIFY_multiple_rows_by_column_by_dict(filterkey: str,
                                            mod_dict: dict,
-                                           db_table,
-                                           db_path: str = "",
-                                           style: str = "",
-                                           session_in: object or None = None):
-    """
+                                           row_obj: Base,
+                                           session: sessionmaker.object_session):
+    """=== Function name: MODIFY_multiple_rows_by_column_by_dict =======================================================
+    SQL action. You use the session entered. Function alters DB of dedicated rows.
+    Each rows <filterkey> column will be checked. If current value of a <filterey> is included in <mod_dict> as a key,
+    then and only then <mod_dict>'s value (which is always a dictionary) will be applied to said row.
+    Example:    name       age         points
+                joe         12          20
+                johny       13          32
+                jenny       12          14
+                henry       11          10
+                jack        10          20
     
-    @param filterkey: 
-    @param mod_dict: 
-    @param db_path: 
-    @param db_table: 
-    @param style: 
-    @param session_in:
-    @return: 
-    """
-    if session_in:
-        session = session_in
-    else:
-        session = createSession(db_path=db_path, style=style)
-    global OBJ_KEY
-    RowObj = OBJ_KEY[db_table]
+    filterkey: age
+    mod_dict: {12: {'points': '0'}, 11: {'points': 'x'} }
+    
+    result:     name       age         points
+                joe         12          0               <-- as age = 12, points is set to 0
+                johny       13          32
+                jenny       12          0               <-- as age = 12, points is set to 0
+                henry       11          x               <-- as age = 11, points is set to x
+                jack        10          20
+        
+    ATTENTION: function does NOT close the session at the end! - you can continue using it.
+    :param filterkey: str - the key whoes values must be included in <mod_dict> as a key in order for the parent row
+                            to get altered
+    :param mod_dict: dict - of targetkeys : targetvalues. targetvalues are the new values
+    :param row_obj: Base - the class attached to the table you want to query
+    :param session: session-obj - a pre-created session. It is NOT closed at the end of the function.
+    :return: nothing
+    ============================================================================================== by Sziller ==="""
+    # Current Function Name
+    # cfn = inspect.currentframe().f_code.co_name  # current class name
     for filtervalue, sub_dict in mod_dict.items():
-        session.query(RowObj).filter(getattr(RowObj, filterkey) == filtervalue).update(sub_dict)
+        session.query(row_obj).filter(getattr(row_obj, filterkey) == filtervalue).update(sub_dict)
     session.commit()
 
 
 def QUERY_entire_table(ordered_by: str,
                        row_obj: Base,
                        session: sessionmaker.object_session) -> list:
-    """=== Function name: QUERY_entire_table =========================================================================
+    """=== Function name: QUERY_entire_table ===========================================================================
     SQL action. You use the session entered. Function returns the entire DB table defined by <row_obj>.
     :param ordered_by: str -
-    :param row_obj: str - name of the table you want to write
-    :param session: obj - a precreated session. If used, it will not be closed. If not entered, a new session is
-                                                    created, which is closed at the end.
-    :return: list of rows of the table requested
-    ========================================================================================== by Sziller ==="""
+    :param row_obj: Base - the class attached to the table you want to query
+    :param session: session-obj - a pre-created session. It is NOT closed at the end of the function.
+    :return: list of the rows of the table requested. Rows are represented as dictionaries.
+    ============================================================================================== by Sziller ==="""
+    # Current Function Name
+    # cfn = inspect.currentframe().f_code.co_name  # current class name
     results = session.query(row_obj).order_by(ordered_by).all()
     result_list = [_.return_as_dict() for _ in results]
     session.commit()
@@ -351,27 +197,48 @@ def QUERY_entire_table(ordered_by: str,
 def QUERY_rows_by_column_filtervalue_list_ordered(filterkey: str,
                                                   filtervalue_list: list,
                                                   ordered_by: str,
-                                                  db_table: str,
-                                                  session_in: object or None = None) -> list:
+                                                  row_obj: Base,
+                                                  session: sessionmaker.object_session) -> list:
 
-    """=== Function name: QUERY_rows_by_column_filtervalue_list_ordered =============================================
-    This function deals with the entered DB Table!!!
-    @param filterkey:
-    @param filtervalue_list:
-    @param ordered_by:
-    @param db_path:
-    @param db_table:
-    @param style:
-    @param session_in:
-    @return:
+    """=== Function name: QUERY_rows_by_column_filtervalue_list_ordered ================================================
+    SQL action. You use the session entered. Function returns specific rows of the DB table defined by <row_obj>.
+    Raws are selected if their value of <filterkey> is included in <filtervalue_list>.
+    :param filterkey: str - the key (column) whoes values must be included in <filtervalue_list> in order
+                            for the parent row to be included in the query
+    :param filtervalue_list: list - of values, one of which the filterkey must take in order for its parent row to be
+                                    subject of this function
+    :param ordered_by: str -
+    :param row_obj: Base - the class attached to the table you want to query
+    :param session: session-obj - a pre-created session. It is NOT closed at the end of the function.
+    :return: list of the rows of the table requested. Rows are represented as dictionaries.
     ============================================================================================== by Sziller ==="""
-    session = session_in
-    global OBJ_KEY
-    RowObj = OBJ_KEY[db_table]
-    results = session.query(RowObj).filter(getattr(RowObj, filterkey).in_(tuple(filtervalue_list))).order_by(ordered_by)
+    # Current Function Name
+    # cfn = inspect.currentframe().f_code.co_name  # current class name
+    results = session.query(row_obj).filter(getattr(row_obj, filterkey).
+                                            in_(tuple(filtervalue_list))).order_by(ordered_by)
     result_list = [_.return_as_dict() for _ in results]
     session.commit()
     return result_list
+
+
+# DB manipulating functions ENDED                                                           -   ENDED   -
+
+
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy import MetaData
+
+# def drop_table(table_name, engine):
+#     """
+#     :param table_name:
+#     :param engine:
+#     :return:
+#     """
+#     Base = declarative_base()
+#     metadata = MetaData()
+#     metadata.reflect(bind=engine)
+#     table = metadata.tables[table_name]
+#     if table is not None:
+#         Base.metadata.drop_all(engine, [table], checkfirst=True)
 
 
 if __name__ == "__main__":
