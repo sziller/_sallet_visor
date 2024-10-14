@@ -1,5 +1,4 @@
 import logging
-import inspect
 import os
 from dotenv import load_dotenv
 from SalletBasePackage.models import UtxoId
@@ -8,7 +7,10 @@ from SalletNodePackage.BitcoinNodeObject import Node
 lg = logging.getLogger(__name__)
 lg.info("START: {:>85} <<<".format('mngr_bitcoinnodeobject.py'))
 
+load_dotenv()
+
 if __name__ == "__main__":
+    
     # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
     logging.basicConfig(filename="./log/mngr_bitcoinnodeobject.log", level=logging.NOTSET, filemode="w",
                         format="%(asctime)s [%(levelname)8s]: %(message)s", datefmt='%y%m%d %H:%M:%S')
@@ -137,6 +139,5 @@ if __name__ == "__main__":
     lg.warning("=== nodeop_get_utxo_id_set_with_address                                              ===")
     lg.warning("========================================================================================")
     node = Node(dotenv_path="./.env", is_rpc=True, alias="sziller", owner="sziller.eu")
-    load_dotenv()
     addresslist = eval(os.getenv("ADDRESSES"))
     node.nodeop_get_utxo_set_by_addresslist(address_list=addresslist)

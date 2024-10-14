@@ -57,6 +57,8 @@ class Node(object):
             self.apply_dotenv_rpc_data()
         lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
                  .format(self.ccn, self.alias, self.owner, self.ip, self.port, self.is_rpc))
+        lg.debug(f"RPC_IP: {self.ip}, RPC_PORT: {self.port}, RPC_USER: {self.rpc_user}, RPC_PSSW: {self.rpc_password}")
+
 
     def __repr__(self):
         return "{:>15}:{} - {} / {}".format(self.ip, self.port, self.alias, self.owner, )
@@ -119,10 +121,16 @@ class Node(object):
             command = "getconnectioncount"
             lg.debug("running   : {}".format(cmn))
             serverURL = self.rpc_url()
+            print(serverURL)
+            print("!!!")
             OneReq = RPCHost.RPCHost(serverURL)
+            print(OneReq)
             resp = OneReq.call(command)
+            print("!!!")
+            
             lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
             lg.debug("exit      : {}".format(cmn))
+            print(resp)
             return resp
         else:
             msg = "Request only possible for local Node and when using RPC!\n - says: {} at {}".format(cmn, self.ccn)
