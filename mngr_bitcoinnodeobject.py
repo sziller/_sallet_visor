@@ -133,7 +133,7 @@ if __name__ == "__main__":
     op_id = UtxoId.construct(
         {"txid": '7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741',
          "n": 0})  # creating matching outputs outpoint ID
-    print(node.nodeop_get_tx_outpoint_value(tx_outpoint=op_id))
+    # print(node.nodeop_get_tx_outpoint_value(tx_outpoint=op_id))
 
     lg.warning("========================================================================================")
     lg.warning("=== nodeop_get_utxo_id_set_with_address                                              ===")

@@ -45,36 +45,40 @@ class Node(object):
         self.dotenv_path: str                   = dotenv_path
         self.alias: str                         = alias
         self.owner: str                         = owner
-        self.ip: (str, None)                    = ip                # default: '127.0.0.1'
-        self.port: (int, None)                  = port              # default: 8333
+        self.rpc_ip: (str, None)                = ip                # default: '127.0.0.1'
+        self.rpc_port: (int, None)              = port              # default: 8333
         self.features: dict or None             = features
         self.desc: str                          = desc
         self.is_rpc: bool                       = is_rpc
         self.rpc_user: (str, None)              = None
         self.rpc_password: (str, None)          = None
-        load_dotenv()
-        if self.is_rpc:
-            self.apply_dotenv_rpc_data()
-        lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
-                 .format(self.ccn, self.alias, self.owner, self.ip, self.port, self.is_rpc))
-        lg.debug(f"RPC_IP: {self.ip}, RPC_PORT: {self.port}, RPC_USER: {self.rpc_user}, RPC_PSSW: {self.rpc_password}")
+        self.ext_node_url: (str, None)          = None
 
+        self.load_dotenv_data()
+        lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
+                 .format(self.ccn, self.alias, self.owner, self.rpc_ip, self.rpc_port, self.is_rpc))
 
     def __repr__(self):
-        return "{:>15}:{} - {} / {}".format(self.ip, self.port, self.alias, self.owner, )
+        return "{:>15}:{} - {} / {}".format(self.rpc_ip, self.rpc_port, self.alias, self.owner, )
 
     def __str__(self):
         return self.__repr__()
     
-    def apply_dotenv_rpc_data(self):
-        """=== Method name: apply_dotenv_rpc_data ======================================================================
+    def load_dotenv_data(self):
+        """=== Method name: load_dotenv_data ==========================================================================
         Whenever <self.is_rpc> is set to False, class assumes .env to have the necessary connection ans user data,
         and overwrites data entered (if at all) with .env content.
         ========================================================================================== by Sziller ==="""
-        self.ip: str            = os.getenv("RPC_IP")
-        self.port: int          = int(os.getenv("RPC_PORT"))
-        self.rpc_user: str      = os.getenv("RPC_USER")
-        self.rpc_password: str  = os.getenv("RPC_PSSW")
+        load_dotenv(self.dotenv_path)
+        if self.is_rpc:
+            self.rpc_ip: str            = os.getenv("RPC_IP")
+            self.rpc_port: int          = int(os.getenv("RPC_PORT"))
+            self.rpc_user: str      = os.getenv("RPC_USER")
+            self.rpc_password: str  = os.getenv("RPC_PSSW")
+        else:
+            self.ext_node_url       = os.getenv("EXT_NODE_URL")
+            if not self.ext_node_url:
+                raise ValueError("No URL for an external API provider found in the .env file (EXT_NODE_URL).")
         
     @classmethod
     def construct(cls, d_in):
@@ -101,16 +105,38 @@ class Node(object):
         :return: str - of the address
         ============================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
-        lg.debug("reading   : dotenv data - {:>60}".format(cmn))
-        load_dotenv(dotenv_path=self.dotenv_path)
         # ATTENTION: local IP address MUST BE WHITELISTED on Bitcoin Node!
-        rpcIP: str          = self.ip  # os.getenv("RPC_IP")
-        rpcUser: str        = self.rpc_user  # os.getenv("RPC_USER")
-        rpcPassword: str    = self.rpc_password  # os.getenv("RPC_PSSW")
-        rpcPort: str        = self.port  # str(os.getenv("RPC_PORT"))
         lg.debug("returning : serverURL - to access local the RPC server {:>31}".format(cmn))
-        return "http://{}:{}@{}:{}".format(rpcUser, rpcPassword, rpcIP, rpcPort)
+        return "http://{}:{}@{}:{}".format(self.rpc_user, self.rpc_password, self.rpc_ip, self.rpc_port)
         # return 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcIP + ':' + rpcPort
+
+    def _make_rpc_call(self, command: str, *params):
+        """Helper method to handle RPC calls."""
+        if not self.is_rpc:
+            raise Exception("RPC is required for this operation.")
+        OneReq = RPCHost.RPCHost(self.rpc_url())
+        return OneReq.call(command, *params)
+
+    def _make_external_api_call(self, endpoint: str):
+        """Helper method to make API calls to blockchain.info or similar services."""
+        url = f"{self.ext_node_url}/{endpoint}"
+        try:
+            resp = reqs.get(url)
+            resp.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
+        except reqs.exceptions.RequestException as e:
+            lg.critical(f"Failed API call to {url}, error: {e}")
+            raise Exception(f"API request failed: {e}")
+        return resp.json()
+    
+    def validate_api_url(self):
+        """Check if the API URL is reachable."""
+        try:
+            resp = reqs.get(self.ext_node_url)
+            resp.raise_for_status()  # Raises an exception for non-200 status codes
+        except reqs.exceptions.RequestException as e:
+            lg.critical(f"API URL validation failed: {e}")
+            raise Exception(
+                f"API URL '{self.ext_node_url}' is not reachable. Please check the URL or your connection.")
     
     def nodeop_getconnectioncount(self):
         """=== Fuction name: nodeop_getconnectioncount =================================================================
@@ -120,17 +146,9 @@ class Node(object):
         if self.is_rpc:
             command = "getconnectioncount"
             lg.debug("running   : {}".format(cmn))
-            serverURL = self.rpc_url()
-            print(serverURL)
-            print("!!!")
-            OneReq = RPCHost.RPCHost(serverURL)
-            print(OneReq)
-            resp = OneReq.call(command)
-            print("!!!")
-            
+            resp = self._make_rpc_call(command)
             lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
             lg.debug("exit      : {}".format(cmn))
-            print(resp)
             return resp
         else:
             msg = "Request only possible for local Node and when using RPC!\n - says: {} at {}".format(cmn, self.ccn)
@@ -142,13 +160,13 @@ class Node(object):
         command = "getblockhash"
         lg.debug("running   : {}".format(cmn))
         if self.is_rpc:
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(serverURL)
-            blockhash = OneReq.call(command, sequence_nr)
+            resp = self._make_rpc_call(command, sequence_nr)
         else:
-            resp = reqs.get('https://blockchain.info/q/{}'.format(command))
-            blockhash = False
-        return blockhash
+            endpoint = f"q/{command}/{sequence_nr}"
+            resp = self._make_external_api_call(endpoint)
+        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
+        lg.debug("exit      : {}".format(cmn))
+        return resp
 
     def nodeop_getblockcount(self):
         """=== Fuction name: get_blockheight ===========================================================================
@@ -158,20 +176,13 @@ class Node(object):
         command = "getblockcount"
         lg.debug("running   : {}".format(cmn))
         if self.is_rpc:
-            OneReq = RPCHost.RPCHost(self.rpc_url())
-            actual_blockcount = OneReq.call(command)
+            resp = self._make_rpc_call(command)
         else:
-            resp = reqs.get('https://blockchain.info/q/{}'.format(command))
-            try:
-                actual_blockcount: int = resp.json()
-                lg.info("BITCOIN   : current blockheight:{:>10}".format(actual_blockcount))
-            except:
-                actual_blockcount = 0
-                lg.critical("({:>2}) blockchain.info answer FAILED: https://blockchain.info/q/".format(""))
-                time.sleep(0.1)
-        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, actual_blockcount))
+            endpoint = f"q/{command}"
+            resp = self._make_external_api_call(endpoint)
+        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
         lg.debug("exiting   : {}".format(cmn))
-        return actual_blockcount
+        return resp
         
     def nodeop_getblock(self, block_hash: str):
         """=== Fuction name: nodeop_getblock ===========================================================================
@@ -180,15 +191,12 @@ class Node(object):
         command = "getblock"
         lg.debug("running   : {}".format(cmn))
         if self.is_rpc:
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(serverURL)
-            resp = OneReq.call(command, block_hash)
-            lg.debug("returning : {:<30} - {:>20}:\n{}".format(cmn, command, block_hash))
-            lg.debug("exiting   : {}".format(cmn))
-            return resp
+            resp = self._make_rpc_call(command, block_hash)
         else:
-            resp = reqs.get("https://blockchain.info/rawblock/{}".format(block_hash))
-            return resp
+            resp = self._make_external_api_call(f"rawblock/{block_hash}")
+        lg.debug("returning : {:<30} - {:>20}:\n{}".format(cmn, command, block_hash))
+        lg.debug("exiting   : {}".format(cmn))
+        return resp
 
     def check_tx_confirmation(self, tx_hash: str, limit: int = 6) -> bool:
         """=== Function name: check_tx_confirmation ========================================================================
@@ -200,12 +208,13 @@ class Node(object):
         cmn = inspect.currentframe().f_code.co_name  # current method name
         try:
             count = self.nodeop_confirmations(tx_hash=tx_hash)
-        except:
-            lg.critical("nodeop_confirmations() threw an error!!!")
-            count = 0
-        if count >= limit:
-            return True
-        return False
+        except Exception as e:
+            lg.error("nodeop_confirmations() threw an error:\n{}".format(e))
+            return False
+        confirmed = count >= limit
+        lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, "confirmed", tx_hash))
+        lg.debug("exiting   : {}".format(cmn))
+        return confirmed
 
     def publish_tx(self, tx_raw: str) -> bool:
         """=== Method name: publish_tx =================================================================================
@@ -218,14 +227,12 @@ class Node(object):
         lg.debug("Node requ.: {:>16} - publish attempt...".format({True: "OWN NODE",
                                                                   False: "blockchain.info"}[self.is_rpc]))
         if self.is_rpc:
-            serverURL = self.rpc_url()
             try:
-                OneReq = RPCHost.RPCHost(url=serverURL)
-                resp = OneReq.call("sendrawtransaction", tx_raw)
-            except:
+                resp = self._make_rpc_call("sendrawtransaction", tx_raw)
+                return True
+            except Exception as e:
                 lg.warning("Node resp.:{:>16} - status code:{:>4}".format("blockchain.info", False))
                 return False
-            return resp
         else:
             resp = reqs.post("https://blockchain.info/pushtx", data={"tx": tx_raw})
             lg.warning("Node resp.:{:>16} - status code:{:>4}".format("blockchain.info", resp.status_code))
@@ -326,60 +333,22 @@ class Node(object):
         command = "confirmations"
         lg.debug("running   : {}".format(cmn))
         
-        if self.is_rpc:
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(url=serverURL)
-            resp = OneReq.call("getrawtransaction", tx_hash, 1)
-            if resp and "confirmations" in resp:
-                confirmed = resp["confirmations"]
+        try:
+            if self.is_rpc:
+                resp = self._make_rpc_call("getrawtransaction", tx_hash, 1)
+                confirmations = resp.get("confirmations", 0)
             else:
-                confirmed = 0
-        else:
-            cmd = "getblockcount"
-            # command: getblockcount
-            actual_blockcount: int = 0
-            actual_tx_data: dict = {}
-            ping_times = 0
-            ping_limit = 16
-    
-            while not actual_blockcount or not actual_tx_data:
-                resp = reqs.get('https://blockchain.info/q/{}'.format(cmd))
-                try:
-                    actual_blockcount: int = resp.json()
-                    lg.debug("BITCOIN   : current blockheight:{:>10}".format(actual_blockcount))
-                except:
-                    actual_blockcount = 0
-                    lg.critical("({:>2}) blockchain.info answer FAILED: https://blockchain.info/q/".format(ping_times))
-                    time.sleep(0.1)
-    
-                request_txt = "https://blockchain.info/rawtx/{}".format(tx_hash)
-                resp = reqs.get(request_txt)
-                try:
-                    actual_tx_data: dict = resp.json()
-                    # lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(actual_tx_data))
-                except:
-                    actual_tx_data = {}
-                    lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format(ping_times, request_txt))
-                    lg.critical("returned  : {}".format(resp))
-                    time.sleep(0.1)
-                if ping_times >= ping_limit:
-                    lg.critical("({:>2}) / ({:>2}) couldn't get answer from blockchain.info. Request timed out!"
-                                .format(ping_times, ping_limit))
-                    break
-                ping_times += 1
-            try:
-                tx_blockindex = actual_tx_data['block_height']
-                if tx_blockindex is not None:
-                    confirmed = 1 + actual_blockcount - tx_blockindex
-                else:
-                    confirmed = 0
-            except KeyError:
-                confirmed = 0
-        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, confirmed))
-        lg.debug("exiting   : {}".format(cmn))
-        return confirmed
-
-    # 'getblockhash', nr
+                actual_blockcount = self.nodeop_getblockcount()
+                tx_data = self.nodeop_getrawtransaction(tx_hash, verbose=1)  # command: getblockcount
+                tx_blockindex = tx_data.get("block_height", 0)
+                confirmations = max(0, actual_blockcount - tx_blockindex + 1)
+                
+            lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, confirmations))
+            lg.debug("exiting   : {}".format(cmn))
+            return confirmations
+        except Exception as e:
+            lg.error(f"{cmn}: Failed to get confirmations - {e}")
+            return 0
 
 
 if __name__ == "__main__":
