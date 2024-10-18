@@ -35,50 +35,50 @@ class Node(object):
 
     def __init__(self,
                  alias: str,  # think of it as the ID of the Node inside your system
-                 is_rpc: bool,
-                 owner: (str, None) = "N/A",
-                 ip: (str, None) = None,
-                 port: (int, None) = 0,
-                 features: (dict, None) = None,
-                 desc: str = "",
-                 dotenv_path: str = "./.env"):
-        self.dotenv_path: str                   = dotenv_path
+                 is_rpc: bool):
         self.alias: str                         = alias
-        self.owner: str                         = owner
-        self.rpc_ip: (str, None)                = ip                # default: '127.0.0.1'
-        self.rpc_port: (int, None)              = port              # default: 8333
-        self.features: dict or None             = features
-        self.desc: str                          = desc
         self.is_rpc: bool                       = is_rpc
+        self.owner: (str, None)                 = None
+        # ------------------------------------------------------------------------------------------
+        self.rpc_ip: (str, None)                = None                # default: '127.0.0.1'
+        self.rpc_port: (int, None)              = None              # default: 8333
         self.rpc_user: (str, None)              = None
         self.rpc_password: (str, None)          = None
         self.ext_node_url: (str, None)          = None
+        # ------------------------------------------------------------------------------------------
+        self.features: (dict, None)             = None
+        self.desc: (str, None)                  = None
 
-        self.load_dotenv_data()
-        lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
-                 .format(self.ccn, self.alias, self.owner, self.rpc_ip, self.rpc_port, self.is_rpc))
+        lg.debug("instant.ed: {}".format(self.ccn))
+    
+    def reset_sensitive_data(self):
+        """=== Instance method =========================================================================================
+        Clear sensitive data to avoid retaining old credentials.
+        ========================================================================================== by Sziller ==="""
+        self.rpc_ip                             = None
+        self.rpc_port                           = None
+        self.rpc_user                           = None
+        self.rpc_password                       = None
+        self.ext_node_url                       = None
+    
+        # lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
+        #          .format(self.ccn, self.alias, self.owner, self.rpc_ip, self.rpc_port, self.is_rpc))
+
+    def update_sensitive_data(self, rpc_ip=None, rpc_port=None, rpc_user=None, rpc_password=None, ext_node_url=None):
+        """=== Instance method =========================================================================================
+        Update the sensitive data for the Node object. All of them at once!
+        ========================================================================================== by Sziller ==="""
+        self.rpc_ip                             = rpc_ip
+        self.rpc_port                           = rpc_port
+        self.rpc_user                           = rpc_user
+        self.rpc_password                       = rpc_password
+        self.ext_node_url                       = ext_node_url
 
     def __repr__(self):
         return "{:>15}:{} - {} / {}".format(self.rpc_ip, self.rpc_port, self.alias, self.owner, )
 
     def __str__(self):
         return self.__repr__()
-    
-    def load_dotenv_data(self):
-        """=== Method name: load_dotenv_data ==========================================================================
-        Whenever <self.is_rpc> is set to False, class assumes .env to have the necessary connection ans user data,
-        and overwrites data entered (if at all) with .env content.
-        ========================================================================================== by Sziller ==="""
-        load_dotenv(self.dotenv_path)
-        if self.is_rpc:
-            self.rpc_ip: str            = os.getenv("RPC_IP")
-            self.rpc_port: int          = int(os.getenv("RPC_PORT"))
-            self.rpc_user: str      = os.getenv("RPC_USER")
-            self.rpc_password: str  = os.getenv("RPC_PSSW")
-        else:
-            self.ext_node_url       = os.getenv("EXT_NODE_URL")
-            if not self.ext_node_url:
-                raise ValueError("No URL for an external API provider found in the .env file (EXT_NODE_URL).")
         
     @classmethod
     def construct(cls, d_in):
@@ -100,47 +100,65 @@ class Node(object):
 
     def rpc_url(self) -> str:
         """=== Function name: rpc_url ==================================================================================
-        Function creates the RPC address from the .env included data.
-        :var self.dotenv_path: str - environmental variables location
+        Function generates the RPC address from the sensitive data included in the instance.
+        :var self.rpc_user
+        :var self.rpc_password
+        :var self.rpc_ip
+        :var self.rpc_port
         :return: str - of the address
         ============================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         # ATTENTION: local IP address MUST BE WHITELISTED on Bitcoin Node!
-        lg.debug("returning : serverURL - to access local the RPC server {:>31}".format(cmn))
+        if not all([self.rpc_ip, self.rpc_user, self.rpc_password, self.rpc_port]):
+            msg = "Missing RPC configuration for the node."
+            lg.critical("rpc call  : {} - says {}()".format(msg, cmn), exc_info=False)
+            raise ValueError(msg)
+        lg.debug("returning : RPC address - says {}()".format(cmn))
         return "http://{}:{}@{}:{}".format(self.rpc_user, self.rpc_password, self.rpc_ip, self.rpc_port)
-        # return 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcIP + ':' + rpcPort
 
     def _make_rpc_call(self, command: str, *params):
-        """Helper method to handle RPC calls."""
+        """=== Method name: _make_external_api_call ====================================================================
+        Helper method to make API calls to blockchain.info or similar services.
+        :param endpoint: str - the specific API endpoint to call
+        :return: json response from the external API
+        ========================================================================================== by Sziller ==="""
         if not self.is_rpc:
             raise Exception("RPC is required for this operation.")
         OneReq = RPCHost.RPCHost(self.rpc_url())
         return OneReq.call(command, *params)
 
     def _make_external_api_call(self, endpoint: str):
-        """Helper method to make API calls to blockchain.info or similar services."""
+        """=== Method name: _make_external_api_call ====================================================================
+        Helper method to make API calls to blockchain.info or similar services.
+        :param endpoint: str - the specific API endpoint to call
+        :return: json response from the external API
+        ========================================================================================== by Sziller ==="""
         url = f"{self.ext_node_url}/{endpoint}"
         try:
             resp = reqs.get(url)
             resp.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
         except reqs.exceptions.RequestException as e:
-            lg.critical(f"Failed API call to {url}, error: {e}")
+            lg.error(f"Failed API call to entered URL, error!", exc_info=False)
             raise Exception(f"API request failed: {e}")
         return resp.json()
     
     def validate_api_url(self):
-        """Check if the API URL is reachable."""
+        """=== Method name: validate_api_url ===========================================================================
+        Check if the external API URL is reachable.
+        Raises an exception if the API is not reachable.
+        ========================================================================================== by Sziller ==="""
         try:
             resp = reqs.get(self.ext_node_url)
             resp.raise_for_status()  # Raises an exception for non-200 status codes
         except reqs.exceptions.RequestException as e:
-            lg.critical(f"API URL validation failed: {e}")
+            lg.critical(f"API URL validation failed!", exc_info=False)
             raise Exception(
-                f"API URL '{self.ext_node_url}' is not reachable. Please check the URL or your connection.")
+                f"API URL '{self.ext_node_url}' is not reachable. Please check the URL or your connection.\n{e}")
     
     def nodeop_getconnectioncount(self):
         """=== Fuction name: nodeop_getconnectioncount =================================================================
-        Method returns the number of actice connections of your Node. Only viable over RPC!
+        Method returns the number of active connections of your Node. Only viable over RPC.
+        :return: number of active connections
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         if self.is_rpc:
@@ -152,10 +170,15 @@ class Node(object):
             return resp
         else:
             msg = "Request only possible for local Node and when using RPC!\n - says: {} at {}".format(cmn, self.ccn)
-            lg.critical(msg)
+            lg.error(msg, exc_info=False)
             raise Exception(msg)
 
     def nodeop_getblockhash(self, sequence_nr: int):
+        """=== Method name: nodeop_getblockhash ========================================================================
+        Method retrieves the block hash at a specific sequence number (height).
+        :param sequence_nr: int - the sequence number of the block
+        :return: block hash at the given sequence number
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblockhash"
         lg.debug("running   : {}".format(cmn))
@@ -185,7 +208,10 @@ class Node(object):
         return resp
         
     def nodeop_getblock(self, block_hash: str):
-        """=== Fuction name: nodeop_getblock ===========================================================================
+        """=== Method name: nodeop_getblock ============================================================================
+        Method retrieves block information for a given block hash.
+        :param block_hash: str - the block hash to retrieve
+        :return: block details for the given hash
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblock"
@@ -209,15 +235,15 @@ class Node(object):
         try:
             count = self.nodeop_confirmations(tx_hash=tx_hash)
         except Exception as e:
-            lg.error("nodeop_confirmations() threw an error:\n{}".format(e))
+            lg.error("nodeop_confirmations() threw an error:\n{}".format(e), exc_info=False)
             return False
         confirmed = count >= limit
         lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, "confirmed", tx_hash))
         lg.debug("exiting   : {}".format(cmn))
         return confirmed
 
-    def publish_tx(self, tx_raw: str) -> bool:
-        """=== Method name: publish_tx =================================================================================
+    def nodeop_publish_tx(self, tx_raw: str) -> bool:
+        """=== Method name: nodeop_publish_tx ==========================================================================
         @param tx_raw: str - hxstr format of the serialized Bitcoin transaction.
         @return: bool - True TX was published False if not.
                         If False is returned, you should take action.
@@ -229,71 +255,79 @@ class Node(object):
         if self.is_rpc:
             try:
                 resp = self._make_rpc_call("sendrawtransaction", tx_raw)
+                lg.warning("Node resp.: {:<30} - rpc publish:PUBLISHED {:>20}".format(cmn, resp))
                 return True
             except Exception as e:
-                lg.warning("Node resp.:{:>16} - status code:{:>4}".format("blockchain.info", False))
+                lg.error("Node resp.: {:<30} - rpc publish:FAILED    {:>20}".format(cmn, 'Exception'), exc_info=False)
                 return False
         else:
-            resp = reqs.post("https://blockchain.info/pushtx", data={"tx": tx_raw})
-            lg.warning("Node resp.:{:>16} - status code:{:>4}".format("blockchain.info", resp.status_code))
-            return resp.status_code == 200
+            endpoint = "pushtx"
+            try:
+                resp = reqs.post("{}/{}".format(self.ext_node_url, endpoint), data={"tx": tx_raw})
+                lg.warning("Node resp.: {:<30} - ext publish:PUBLISHED {:>20}"
+                           .format("blockchain.info", resp.status_code))
+                return resp.status_code == 200
+            except reqs.exceptions.RequestException as e:
+                lg.error("Node resp.: {:<30} - ext publish:FAILED    {:>20}"
+                         .format("blockchain.info", e), exc_info=False)
 
     def nodeop_getrawtransaction(self, tx_hash: str, verbose: int = 0):
         """=== Method name: nodeop_getrawtransaction ===================================================================
+        Method retrieves raw transaction details by TX hash.
+        :param tx_hash: str - the transaction hash (ID)
+        :param verbose: int - verbosity level (0 or 1)
+        :return: transaction details or raw hex, depending on verbosity
         ============================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getrawtransaction"
         lg.debug("running   : {}".format(cmn))
-        if self.is_rpc:
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(url=serverURL)
-            method_response = OneReq.call("getrawtransaction", tx_hash, verbose)
-        else:
-            if verbose:
-                request_txt = "https://blockchain.info/rawtx/{}{}".format(tx_hash, "")  # verbose response
-                resp = reqs.get(request_txt)
-                try:
-                    method_response = resp.json()
-                    # lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
-                except:
-                    method_response = {}
-                    lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format("", request_txt))
-                    lg.critical("returned  : {}".format(resp))
-                    time.sleep(0.1)
+        try:
+            if self.is_rpc:
+                resp = self._make_rpc_call(command, tx_hash, verbose)  # RPC path - pass verbosity to the RPC call
             else:
-                request_txt = "https://blockchain.info/rawtx/{}{}".format(tx_hash, "?format=hex")  # verbose response
-                resp = reqs.get(request_txt)
-                try:
-                    method_response = resp.text
-                    # lg.debug("BITCOIN   : blockchain.info about current TX:\n{}".format(method_response))
-                except:
-                    method_response  = ""
-                    lg.critical("({:>2}) blockchain.info answer FAILED:\n{}".format("", request_txt))
-                    lg.critical("returned  : {}".format(resp))
-                    time.sleep(0.1)
-        lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
-        lg.debug("exiting   : {}".format(cmn))
-        return method_response
+                endpoint = f"rawtx/{tx_hash}"
+                if verbose == 0:
+                    endpoint += "?format=hex"
+                resp = self._make_external_api_call(endpoint)
+
+                # If verbosity is set, the response is in JSON format, otherwise it's raw hex.
+                if verbose == 0:
+                    lg.debug(f"returning : raw hex for TX {tx_hash}")
+                    lg.debug("exiting   : {}".format(cmn))
+                else:
+                    lg.debug(f"returning : detailed JSON for TX {tx_hash}")
+                    lg.debug("exiting   : {}".format(cmn))
+                return resp
+            lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
+            lg.debug("exiting   : {}".format(cmn))
+            return resp
+        except Exception as e:
+            lg.error(f"{cmn}: Failed to fetch raw transaction - 'Exception'", exc_info=False)
+            return None
     
     def nodeop_get_tx_outpoint_value(self, tx_outpoint: UtxoId) -> int:
         """=== Method name: nodeop_get_tx_outpoint =====================================================================
+        Method retrieves the value of a specific TX outpoint (UTXO).
+        :param tx_outpoint: UtxoId - the UTXO outpoint to get the value for
+        :return: int - value of the UTXO
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
-        if self.is_rpc:
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(url=serverURL)
-            hxstr = OneReq.call("getrawtransaction", tx_outpoint.txid, False)
-        else:
-            try:
-                request_txt = "https://blockchain.info/rawtx/{}{}".format(tx_outpoint.txid, "?format=hex")
-                resp = reqs.get(request_txt)
-                hxstr = resp.text
-            except:
-                msg = "failed    : issue with request from blockchain.info - says {}.{}()".format(self.ccn, cmn)
-                lg.critical(msg)
-                raise Exception(msg)
-        tx = TXobj.parse(hxstr)
-        return tx.outputs[tx_outpoint.n].value
+        lg.debug("running   : {}".format(cmn))
+        try:
+            if self.is_rpc:
+                hxstr = self._make_rpc_call("getrawtransaction", tx_outpoint.txid, False)
+            else:
+                endpoint = "rawtx/{}?format=hex".format(tx_outpoint.txid)
+                hxstr = self._make_external_api_call(endpoint)
+                
+            tx = TXobj.parse(hxstr)
+            value = tx.outputs[tx_outpoint.n].value
+            lg.debug(f"returning : UTXO value: {value} - says {cmn}")
+            return value
+        except Exception as e:
+            msg = "failed    : issue with request from blockchain.info - says {}.{}()\n - {}".format(self.ccn, cmn, e)
+            lg.error(msg, exc_info=False)
+            raise Exception(msg)
             
     def nodeop_get_utxo_set_by_addresslist(self, address_list) -> dict:
         """=== Method name: nodeop_get_utxo_set_by_addresslist =========================================================
@@ -320,7 +354,7 @@ class Node(object):
             return resp
         else:
             msg = "Method only usable as RPC call".format(cmn, self.ccn)
-            lg.critical(msg)
+            lg.error(msg, exc_info=False)
             raise Exception(msg)
     
     def nodeop_confirmations(self, tx_hash: str) -> int:
@@ -347,7 +381,7 @@ class Node(object):
             lg.debug("exiting   : {}".format(cmn))
             return confirmations
         except Exception as e:
-            lg.error(f"{cmn}: Failed to get confirmations - {e}")
+            lg.error(f"{cmn}: Failed to get confirmations - {e}", exc_info=False)
             return 0
 
 
