@@ -117,7 +117,7 @@ class Node(object):
         return "http://{}:{}@{}:{}".format(self.rpc_user, self.rpc_password, self.rpc_ip, self.rpc_port)
 
     def _make_rpc_call(self, command: str, *params):
-        """=== Method name: _make_external_api_call ====================================================================
+        """=== Instance method =========================================================================================
         Helper method to make API calls to blockchain.info or similar services.
         :param endpoint: str - the specific API endpoint to call
         :return: json response from the external API
@@ -128,7 +128,7 @@ class Node(object):
         return OneReq.call(command, *params)
 
     def _make_external_api_call(self, endpoint: str, expect_json: bool = True):
-        """=== Method name: _make_external_api_call ====================================================================
+        """=== Instance method =========================================================================================
         Helper method to make API calls to blockchain.info or similar services.
         :param endpoint: str - the specific API endpoint to call
         :return: json response from the external API
@@ -147,7 +147,7 @@ class Node(object):
             raise Exception(f"API request failed: {e}")
     
     def validate_api_url(self):
-        """=== Method name: validate_api_url ===========================================================================
+        """=== Instance method =========================================================================================
         Check if the external API URL is reachable.
         Raises an exception if the API is not reachable.
         ========================================================================================== by Sziller ==="""
@@ -164,7 +164,7 @@ class Node(object):
                 f"API URL '{self.ext_node_url}' is not reachable. Please check the URL or your connection.\n{e}")
     
     def nodeop_getconnectioncount(self):
-        """=== Fuction name: nodeop_getconnectioncount =================================================================
+        """=== Instance method =========================================================================================
         Method returns the number of active connections of your Node. Only viable over RPC.
         :return: number of active connections
         ========================================================================================== by Sziller ==="""
@@ -182,7 +182,7 @@ class Node(object):
             raise Exception(msg)
 
     def nodeop_getblockhash(self, sequence_nr: int):
-        """=== Method name: nodeop_getblockhash ========================================================================
+        """=== Instance method =========================================================================================
         Method retrieves the block hash at a specific sequence number (height).
         :param sequence_nr: int - the sequence number of the block
         :return: block hash at the given sequence number
@@ -200,7 +200,7 @@ class Node(object):
         return resp
 
     def nodeop_getblockcount(self):
-        """=== Fuction name: get_blockheight ===========================================================================
+        """=== Instance method =========================================================================================
         Node operation returns height of newest block available at current time.
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
@@ -216,7 +216,7 @@ class Node(object):
         return resp
         
     def nodeop_getblock(self, block_hash: str):
-        """=== Method name: nodeop_getblock ============================================================================
+        """=== Instance method =========================================================================================
         Method retrieves block information for a given block hash.
         :param block_hash: str - the block hash to retrieve
         :return: block details for the given hash
@@ -233,7 +233,7 @@ class Node(object):
         return resp
 
     def check_tx_confirmation(self, tx_hash: str, limit: int = 6) -> bool:
-        """=== Function name: check_tx_confirmation ========================================================================
+        """=== Instance method =========================================================================================
         Function checks if entered Transaction (by hash) had been confirmed according to limit entered.
         @param tx_hash: str - hxstr of the transaction's hash (or ID)
         @param limit: int - number of miniml confirmations necessary to be considered CONFIRMED by local system
@@ -251,7 +251,7 @@ class Node(object):
         return confirmed
 
     def nodeop_publish_tx(self, tx_raw: str) -> bool:
-        """=== Method name: nodeop_publish_tx ==========================================================================
+        """=== Instance method =========================================================================================
         @param tx_raw: str - hxstr format of the serialized Bitcoin transaction.
         @return: bool - True TX was published False if not.
                         If False is returned, you should take action.
@@ -280,7 +280,7 @@ class Node(object):
                          .format("blockchain.info", e), exc_info=False)
 
     def nodeop_getrawtransaction(self, tx_hash: str, verbose: bool = False):
-        """=== Method name: nodeop_getrawtransaction ===================================================================
+        """=== Instance method =========================================================================================
         Method retrieves raw transaction details by TX hash.
         :param tx_hash: str - the transaction hash (ID)
         :param verbose: int - verbosity level (0 or 1)
@@ -315,7 +315,7 @@ class Node(object):
             return None
 
     def nodeop_get_tx_outpoint_value(self, tx_outpoint: UtxoId) -> int:
-        """=== Method name: nodeop_get_tx_outpoint =====================================================================
+        """=== Instance method =========================================================================================
         Method retrieves the value of a specific TX outpoint (UTXO).
         :param tx_outpoint: UtxoId - the UTXO outpoint to get the value for
         :return: int - value of the UTXO
@@ -350,7 +350,7 @@ class Node(object):
             raise Exception(msg)
 
     def nodeop_get_utxo_set_by_addresslist(self, address_list) -> dict:
-        """=== Method name: nodeop_get_utxo_set_by_addresslist =========================================================
+        """=== Instance method =========================================================================================
         Method searches through local UtxoSet and returns those Utxo-s, referring to addresses shown in <address_list>.
         Data is returned as answered by the Node
         :param address_list: list - or addresses in Base58 format
@@ -362,23 +362,43 @@ class Node(object):
             lg.info("starting  : UtxoSet processing - {} at {}".format(cmn, self.ccn))
             formatted_list = ['addr({})'.format(_) for _ in address_list]  # syntax used by BitcoinCore
             lg.debug("converted : list to BitcoinCore request format for command: '{}'".format(command))
-            serverURL = self.rpc_url()
-            OneReq = RPCHost.RPCHost(url=serverURL)
-            if OneReq.call(command, 'status'):
+
+            # Abort if a scan is already in progress
+            if self._make_rpc_call(command, 'status'):
                 lg.warning("aborting  : UtxoSet scan still active - trying to shoot down")
-                OneReq.call(command, 'abort')
+                self._make_rpc_call(command, 'abort')
+
             lg.warning("running...: UtxoSet scan might take several minutes... be patient!")
-            resp = OneReq.call(command, 'start', formatted_list)
-            lg.info("returned  : UtxoSet scan result!")
-            lg.debug("    {}".format(resp))
-            return resp
+
+            try:
+                # Start the scan with the formatted address list
+                resp = self._make_rpc_call(command, 'start', formatted_list)
+
+                lg.info("returned  : UtxoSet scan result!")
+                lg.debug("    {}".format(resp))
+                return resp
+            except Exception as e:
+                lg.error(f"Failed to scan UTXO set: {e}", exc_info=True)
+                raise Exception(f"Failed to complete UTXO scan: {e}")
+            # serverURL = self.rpc_url()
+            # OneReq = RPCHost.RPCHost(url=serverURL)
+            # 
+            # if OneReq.call(command, 'status'):
+            #     lg.warning("aborting  : UtxoSet scan still active - trying to shoot down")
+            #     OneReq.call(command, 'abort')
+            #     
+            # lg.warning("running...: UtxoSet scan might take several minutes... be patient!")
+            # resp = OneReq.call(command, 'start', formatted_list)
+            # lg.info("returned  : UtxoSet scan result!")
+            # lg.info("    {}".format(resp))
+            # return resp
         else:
-            msg = "Method only usable as RPC call".format(cmn, self.ccn)
-            lg.error(msg, exc_info=False)
+            msg = "Method only usable as RPC call - says {} at {}".format(cmn, self.ccn)
+            lg.error(msg, exc_info=True)
             raise Exception(msg)
     
     def nodeop_confirmations(self, tx_hash: str) -> int:
-        """=== Method name: nodeop_confirmations =======================================================================
+        """=== Instance method =========================================================================================
         Read and return number of blocks passed since Transaction was confirmed.
         @param tx_hash: str - hxstr format of the transaction ID
         @return: int - number of confirmations
@@ -388,18 +408,19 @@ class Node(object):
         lg.debug("running   : {}".format(cmn))
         
         try:
+            tx_data = self.nodeop_getrawtransaction(tx_hash, verbose=True)
             if self.is_rpc:
-                resp = self._make_rpc_call("getrawtransaction", tx_hash, 1)
-                confirmations = resp.get("confirmations", 0)
+                confirmations = tx_data.get("confirmations", 0)
             else:
                 actual_blockcount = self.nodeop_getblockcount()
-                tx_data = self.nodeop_getrawtransaction(tx_hash, verbose=1)  # command: getblockcount
+                lg.debug("using     : {:<30} - {:>20}: {:>8}".format("", "actual blockcount", actual_blockcount))
                 tx_blockindex = tx_data.get("block_height", 0)
+                lg.debug("using     : {:<30} - {:>20}: {:>8}".format("", "tx_blockindex", tx_blockindex))
                 confirmations = max(0, actual_blockcount - tx_blockindex + 1)
-                
             lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, confirmations))
             lg.debug("exiting   : {}".format(cmn))
             return confirmations
+        
         except Exception as e:
             lg.error(f"{cmn}: Failed to get confirmations - {e}", exc_info=False)
             return 0
@@ -410,3 +431,5 @@ if __name__ == "__main__":
     # namespace in root directory.
     # Refer to: mngr_bitcoinnodeobject.py
     pass
+
+    
