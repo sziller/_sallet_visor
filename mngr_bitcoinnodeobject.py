@@ -114,46 +114,18 @@ if __name__ == "__main__":
         lg.error("FAILED    : <nodeop_getblockcount>")
 
     lg.info("========================================================================================")
-    lg.info("=== TX request:  blockchain.info, raw, parsed by bitcoinlib:")
-    lg.info("========================================================================================")
-    node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
-    
-    try:
-        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-        tx_data_parsed = bitcoinlib.transactions.Transaction.parse(tx_data)
-        for k, v in tx_data_parsed.as_dict().items():
-            lg.debug("{}: {}".format(k, v))
-    except:
-        lg.error("FAILED    : <nodeop_getrawtransaction>")
-
-    lg.info("========================================================================================")
-    lg.info("=== TX request:  local Node, raw, parsed by bitcoinlib:                              ===")
+    lg.info("=== nodeop_getrawtransaction - RPC, hex, unparsed                                    ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
     node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
                                rpc_port=os.getenv("RPC_BC_01_PORT"),
                                rpc_user=os.getenv("RPC_BC_01_USER"),
                                rpc_password=os.getenv("RPC_BC_01_PSSW"))
+
+    lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-        tx_data_parsed = bitcoinlib.transactions.Transaction.parse(tx_data)
-        for k, v in tx_data_parsed.as_dict().items():
-            lg.debug("{}: {}".format(k, v))
-    except:
-        lg.error("FAILED    : <nodeop_getrawtransaction>")
-
-    lg.info("========================================================================================")
-    lg.info("=== TX request:  blockchain.info, as dict, parsed by blockchain.info:                ===")
-    lg.info("========================================================================================")
-    node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
-    
-    try:
-        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
-        lg.info("transaction: ")
-        for k, v in tx_data.items():
-            lg.debug("{}: {}".format(k, v))
+        lg.info("ANSWER    : {}".format(tx_data))
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
@@ -166,6 +138,40 @@ if __name__ == "__main__":
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
         lg.info("ANSWER    : {}".format(tx_data))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+
+    lg.info("========================================================================================")
+    lg.info("=== nodeop_getrawtransaction - RPC, hex, parsed by bitcoinlib:                       ===")
+    lg.info("========================================================================================")
+    node = Node(is_rpc=True, alias="sziller")
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
+                               rpc_port=os.getenv("RPC_BC_01_PORT"),
+                               rpc_user=os.getenv("RPC_BC_01_USER"),
+                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    # -------------------------------------------------------------------------------------------------
+    lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+        tx_data_parsed = bitcoinlib.transactions.Transaction.parse(tx_data)
+        lg.info("ANSWER    :")
+        for k, v in tx_data_parsed.as_dict().items():
+            lg.info(" - {}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+    
+    lg.info("========================================================================================")
+    lg.info("=== nodeop_getrawtransaction - API, hex, parsed by bitcoinlib:")
+    lg.info("========================================================================================")
+    node = Node(is_rpc=False, alias="sziller")
+    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
+    # -------------------------------------------------------------------------------------------------
+    lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+        tx_data_parsed = bitcoinlib.transactions.Transaction.parse(tx_data)
+        for k, v in tx_data_parsed.as_dict().items():
+            lg.info(" - {}: {}".format(k, v))
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
@@ -187,18 +193,17 @@ if __name__ == "__main__":
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
     lg.info("========================================================================================")
-    lg.info("=== nodeop_getrawtransaction - RPC, hex, unparsed                                    ===")
+    lg.info("=== nodeop_getrawtransaction - API, dict, parsed by blockchain.info:                ===")
     lg.info("========================================================================================")
-    node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
-    
+    node = Node(is_rpc=False, alias="sziller")
+    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
+    # -------------------------------------------------------------------------------------------------
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
-        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-        lg.info("ANSWER    : {}".format(tx_data))
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
+        lg.info("ANSWER    :")
+        for k, v in tx_data.items():
+            lg.info(" - {}: {}".format(k, v))
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
