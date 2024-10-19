@@ -134,12 +134,15 @@ class Node(object):
         :return: json response from the external API
         ========================================================================================== by Sziller ==="""
         url = f"{self.ext_node_url}/{endpoint}"
+        lg.warning(f"requesting: {url}")
         try:
             resp = reqs.get(url)
             resp.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
         except reqs.exceptions.RequestException as e:
             lg.error(f"Failed API call to entered URL, error!", exc_info=False)
             raise Exception(f"API request failed: {e}")
+        print("EXTAPI:")
+        print(resp.json())
         return resp.json()
     
     def validate_api_url(self):
@@ -147,8 +150,12 @@ class Node(object):
         Check if the external API URL is reachable.
         Raises an exception if the API is not reachable.
         ========================================================================================== by Sziller ==="""
+
+        # Use a known good endpoint for testing, like 'q/getblockcount'
+        test_endpoint = f"{self.ext_node_url}/q/getblockcount"
+        
         try:
-            resp = reqs.get(self.ext_node_url)
+            resp = reqs.get(test_endpoint, allow_redirects=True)
             resp.raise_for_status()  # Raises an exception for non-200 status codes
         except reqs.exceptions.RequestException as e:
             lg.critical(f"API URL validation failed!", exc_info=False)
@@ -271,7 +278,7 @@ class Node(object):
                 lg.error("Node resp.: {:<30} - ext publish:FAILED    {:>20}"
                          .format("blockchain.info", e), exc_info=False)
 
-    def nodeop_getrawtransaction(self, tx_hash: str, verbose: int = 0):
+    def nodeop_getrawtransaction(self, tx_hash: str, verbose: bool = False):
         """=== Method name: nodeop_getrawtransaction ===================================================================
         Method retrieves raw transaction details by TX hash.
         :param tx_hash: str - the transaction hash (ID)
@@ -286,25 +293,26 @@ class Node(object):
                 resp = self._make_rpc_call(command, tx_hash, verbose)  # RPC path - pass verbosity to the RPC call
             else:
                 endpoint = f"rawtx/{tx_hash}"
-                if verbose == 0:
+                if not verbose:
                     endpoint += "?format=hex"
                 resp = self._make_external_api_call(endpoint)
 
                 # If verbosity is set, the response is in JSON format, otherwise it's raw hex.
-                if verbose == 0:
+                if not verbose:
                     lg.debug(f"returning : raw hex for TX {tx_hash}")
                     lg.debug("exiting   : {}".format(cmn))
+                    return resp
                 else:
                     lg.debug(f"returning : detailed JSON for TX {tx_hash}")
                     lg.debug("exiting   : {}".format(cmn))
-                return resp
+                    return resp
             lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
             lg.debug("exiting   : {}".format(cmn))
             return resp
         except Exception as e:
-            lg.error(f"{cmn}: Failed to fetch raw transaction - 'Exception'", exc_info=False)
+            lg.error(f"{cmn}: Failed to fetch raw transaction - 'Exception'", exc_info=True)
             return None
-    
+
     def nodeop_get_tx_outpoint_value(self, tx_outpoint: UtxoId) -> int:
         """=== Method name: nodeop_get_tx_outpoint =====================================================================
         Method retrieves the value of a specific TX outpoint (UTXO).
@@ -313,22 +321,32 @@ class Node(object):
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         lg.debug("running   : {}".format(cmn))
+
         try:
+            # Use nodeop_getrawtransaction to fetch the raw transaction data (handles both RPC and API)
+            lg.debug(f"Fetching raw transaction data for TX: {tx_outpoint.txid}")
+            raw_tx = self.nodeop_getrawtransaction(tx_outpoint.txid, verbose=True)  # Use verbose=1 to get detailed info
+
+            if not raw_tx:
+                raise Exception(f"Transaction data for {tx_outpoint.txid} could not be retrieved.")
+
+            # Extract the output value from the transaction data
             if self.is_rpc:
-                hxstr = self._make_rpc_call("getrawtransaction", tx_outpoint.txid, False)
+                # If using RPC, raw_tx is likely a dictionary from the verbose call
+                value = raw_tx["vout"][tx_outpoint.n]["value"]
             else:
-                endpoint = "rawtx/{}?format=hex".format(tx_outpoint.txid)
-                hxstr = self._make_external_api_call(endpoint)
-                
-            tx = TXobj.parse(hxstr)
-            value = tx.outputs[tx_outpoint.n].value
+                # If using the external API, the structure might differ
+                # Adjust accordingly if the API response format differs
+                value = raw_tx["out"][tx_outpoint.n]["value"]
+
             lg.debug(f"returning : UTXO value: {value} - says {cmn}")
             return value
+
         except Exception as e:
-            msg = "failed    : issue with request from blockchain.info - says {}.{}()\n - {}".format(self.ccn, cmn, e)
+            msg = f"Failed to retrieve UTXO value for TX {tx_outpoint.txid} - {e}"
             lg.error(msg, exc_info=False)
             raise Exception(msg)
-            
+
     def nodeop_get_utxo_set_by_addresslist(self, address_list) -> dict:
         """=== Method name: nodeop_get_utxo_set_by_addresslist =========================================================
         Method searches through local UtxoSet and returns those Utxo-s, referring to addresses shown in <address_list>.

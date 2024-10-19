@@ -23,9 +23,20 @@ if __name__ == "__main__":
                         "\nUse ENV='staging' or ENV='production'!".format(os.getenv("ENV")))
     lg.warning("START: {:>85} <<<".format('__name__ == "__main__" namespace: mngr_bitcoinnodeobject.py'))
 
-    lg.warning("========================================================================================")
-    lg.warning("=== mngr_bitcoinodeobject                                                            ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== mngr_bitcoinodeobject                                                            ===")
+    lg.info("========================================================================================")
+    
+    node = Node(is_rpc=True, alias="sziller")
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
+                               rpc_port=os.getenv("RPC_BC_01_PORT"),
+                               rpc_user=os.getenv("RPC_BC_01_USER"),
+                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+
+    node = Node(is_rpc=False, alias="blockchain.info")
+    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
+        
+    node.validate_api_url()
 
     log_time = ""
     rootpath_all_config = ".."
@@ -45,9 +56,9 @@ if __name__ == "__main__":
 
     txid = "ffb5307b8f3486e077f0df869332b128697ddbedeb51c55f181d84bc92961869"
 
-    lg.warning("========================================================================================")
-    lg.warning("=== nodeop_getconnectioncount                                                        ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== nodeop_getconnectioncount                                                        ===")
+    lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
     node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
                                rpc_port=os.getenv("RPC_BC_01_PORT"),
@@ -60,9 +71,9 @@ if __name__ == "__main__":
     except:
         lg.error("FAILED    : <nodeop_getconnectioncount>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== nodeop_getconnectioncount                                                        ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== nodeop_getconnectioncount                                                        ===")
+    lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
     node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
     
@@ -72,9 +83,9 @@ if __name__ == "__main__":
     except:
         lg.error("FAILED    : <nodeop_getconnectioncount>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== SHOWING actual blockheight - real time:")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== SHOWING actual blockheight - real time:")
+    lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
     node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
     
@@ -84,9 +95,9 @@ if __name__ == "__main__":
     except:
         lg.error("FAILED    : <nodeop_getblockcount>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== TX request:  blockchain.info, raw, parsed by bitcoinlib:")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== TX request:  blockchain.info, raw, parsed by bitcoinlib:")
+    lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
     node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
     
@@ -98,9 +109,9 @@ if __name__ == "__main__":
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== TX request:  local Node, raw, parsed by bitcoinlib:                              ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== TX request:  local Node, raw, parsed by bitcoinlib:                              ===")
+    lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
     node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
                                rpc_port=os.getenv("RPC_BC_01_PORT"),
@@ -114,22 +125,36 @@ if __name__ == "__main__":
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== TX request:  blockchain.info, as dict, parsed by blockchain.info:                ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== TX request:  blockchain.info, as dict, parsed by blockchain.info:                ===")
+    lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
     node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
     
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
+        lg.info("transaction: ")
         for k, v in tx_data.items():
             lg.debug("{}: {}".format(k, v))
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== TX request:  local Node, as dict, parsed by Node:                                ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== TX request:  blockchain.info, as hex, parsed by blockchain.info:                 ===")
+    lg.info("========================================================================================")
+    node = Node(is_rpc=False, alias="sziller")
+    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
+
+    try:
+        tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
+        for k, v in tx_data.items():
+            lg.debug("{}: {}".format(k, v))
+    except:
+        lg.error("FAILED    : <nodeop_getrawtransaction>")
+
+    lg.info("========================================================================================")
+    lg.info("=== TX request:  local Node, as dict, parsed by Node:                                ===")
+    lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
     node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
                                rpc_port=os.getenv("RPC_BC_01_PORT"),
@@ -138,13 +163,13 @@ if __name__ == "__main__":
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
         for k, v in tx_data.items():
-            lg.debug("{}: {}".format(k, v))
+            lg.info("{}: {}".format(k, v))
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== TX request:  local Node, raw,  not parsed:                                       ===")
-    lg.warning("========================================================================================")
+    lg.info("========================================================================================")
+    lg.info("=== TX request:  local Node, raw,  not parsed:                                       ===")
+    lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
     node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
                                rpc_port=os.getenv("RPC_BC_01_PORT"),
@@ -152,30 +177,51 @@ if __name__ == "__main__":
                                rpc_password=os.getenv("RPC_BC_01_PSSW"))
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
-        for k, v in tx_data.items():
-            lg.debug("{}: {}".format(k, v))
+        lg.info(tx_data)
     except:
         lg.error("FAILED    : <nodeop_getrawtransaction>")
-    # # ef37b2b383025ddf87209dc4a64dfb48010a274eddc3f16434fe14366241e360
 
-    lg.warning("========================================================================================")
-    lg.warning("=== nodeop_get_tx_outpoint_value                                                     ===")
-    lg.warning("========================================================================================")
-    node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
-    
+    lg.info("========================================================================================")
+    lg.info("=== nodeop_get_tx_outpoint_value  : local Node                                       ===")
+    lg.info("========================================================================================")
+    node = Node(is_rpc=True, alias="sziller")
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
+                               rpc_port=os.getenv("RPC_BC_01_PORT"),
+                               rpc_user=os.getenv("RPC_BC_01_USER"),
+                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+
     op_id = UtxoId.construct(
         {"txid": '7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741',
          "n": 0})  # creating matching outputs outpoint ID
-    # print(node.nodeop_get_tx_outpoint_value(tx_outpoint=op_id))
+    try:
+        value = node.nodeop_get_tx_outpoint_value(tx_outpoint=op_id)
+        lg.info("outpoint value: {}".format(value))
+    except:
+        lg.error("FAILED    : <nodeop_get_tx_outpoint_value>")
 
-    lg.warning("========================================================================================")
-    lg.warning("=== nodeop_get_utxo_id_set_with_address                                              ===")
-    lg.warning("========================================================================================")
-    node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
-    addresslist = eval(os.getenv("ADDRESSES"))
-    node.nodeop_get_utxo_set_by_addresslist(address_list=addresslist)
+    lg.info("========================================================================================")
+    lg.info("=== nodeop_get_tx_outpoint_value  : remote Node                                       ===")
+    lg.info("========================================================================================")
+    node = Node(is_rpc=False, alias="sziller")
+    node.update_sensitive_data(ext_node_url=os.getenv("EXT_NODE_01_URL"))
+
+    op_id = UtxoId.construct(
+        {"txid": '7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741',
+         "n": 0})  # creating matching outputs outpoint ID
+
+    try:
+        value = node.nodeop_get_tx_outpoint_value(tx_outpoint=op_id)
+        lg.info("outpoint value: {}".format(value))
+    except:
+        lg.error("FAILED    : <nodeop_get_tx_outpoint_value>")
+    
+    # lg.info("========================================================================================")
+    # lg.info("=== nodeop_get_utxo_id_set_with_address                                              ===")
+    # lg.info("========================================================================================")
+    # node = Node(is_rpc=True, alias="sziller")
+    # node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
+    #                            rpc_port=os.getenv("RPC_BC_01_PORT"),
+    #                            rpc_user=os.getenv("RPC_BC_01_USER"),
+    #                            rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    # addresslist = eval(os.getenv("ADDRESSES"))
+    # node.nodeop_get_utxo_set_by_addresslist(address_list=addresslist)
