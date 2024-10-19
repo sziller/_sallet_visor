@@ -127,23 +127,24 @@ class Node(object):
         OneReq = RPCHost.RPCHost(self.rpc_url())
         return OneReq.call(command, *params)
 
-    def _make_external_api_call(self, endpoint: str):
+    def _make_external_api_call(self, endpoint: str, expect_json: bool = True):
         """=== Method name: _make_external_api_call ====================================================================
         Helper method to make API calls to blockchain.info or similar services.
         :param endpoint: str - the specific API endpoint to call
         :return: json response from the external API
         ========================================================================================== by Sziller ==="""
         url = f"{self.ext_node_url}/{endpoint}"
-        lg.warning(f"requesting: {url}")
         try:
             resp = reqs.get(url)
             resp.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
+            # Check if we expect JSON or raw text (hex)
+            if expect_json:
+                return resp.json()  # Return the JSON response if expected
+            else:
+                return resp.text  # Return the raw text (e.g., hex) if JSON is not expected
         except reqs.exceptions.RequestException as e:
-            lg.error(f"Failed API call to entered URL, error!", exc_info=False)
+            lg.error(f"Failed API call to entered URL, error!", exc_info=True)
             raise Exception(f"API request failed: {e}")
-        print("EXTAPI:")
-        print(resp.json())
-        return resp.json()
     
     def validate_api_url(self):
         """=== Method name: validate_api_url ===========================================================================
@@ -295,17 +296,17 @@ class Node(object):
                 endpoint = f"rawtx/{tx_hash}"
                 if not verbose:
                     endpoint += "?format=hex"
-                resp = self._make_external_api_call(endpoint)
+                
+                resp = self._make_external_api_call(endpoint, expect_json=verbose)
 
                 # If verbosity is set, the response is in JSON format, otherwise it's raw hex.
                 if not verbose:
                     lg.debug(f"returning : raw hex for TX {tx_hash}")
                     lg.debug("exiting   : {}".format(cmn))
-                    return resp
                 else:
                     lg.debug(f"returning : detailed JSON for TX {tx_hash}")
                     lg.debug("exiting   : {}".format(cmn))
-                    return resp
+                return resp
             lg.debug("returning : {:<30} - {:>20}:\n--- {} ---".format(cmn, command, tx_hash))
             lg.debug("exiting   : {}".format(cmn))
             return resp
@@ -326,9 +327,10 @@ class Node(object):
             # Use nodeop_getrawtransaction to fetch the raw transaction data (handles both RPC and API)
             lg.debug(f"Fetching raw transaction data for TX: {tx_outpoint.txid}")
             raw_tx = self.nodeop_getrawtransaction(tx_outpoint.txid, verbose=True)  # Use verbose=1 to get detailed info
-
             if not raw_tx:
-                raise Exception(f"Transaction data for {tx_outpoint.txid} could not be retrieved.")
+                msg = f"Transaction data for {tx_outpoint.txid} could not be retrieved."
+                lg.critical(msg)
+                raise Exception(msg)
 
             # Extract the output value from the transaction data
             if self.is_rpc:
