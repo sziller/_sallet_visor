@@ -75,10 +75,22 @@ class Node(object):
         self.ext_node_url                       = ext_node_url
 
     def __repr__(self):
-        return "{:>15}:{} - {} / {}".format(self.rpc_ip, self.rpc_port, self.alias, self.owner, )
+        return "{:>15}:{} - {} / {}".format(self.rpc_ip, self.rpc_port, self.alias, self.owner)
 
     def __str__(self):
-        return self.__repr__()
+        return "Node:{:<20} - RPC: {}".format(self.alias, self.is_rpc)
+    
+    def is_valid(self):
+        """=== Instance method =========================================================================================
+        Returning if object is possibly valid
+        ========================================================================================== by Sziller ==="""
+        if all([self.rpc_ip, self.rpc_user, self.rpc_password, self.rpc_port, self.is_rpc]):
+            return True
+        elif (self.is_rpc is False) and self.ext_node_url:
+            return True
+        else:
+            return False
+            
         
     @classmethod
     def construct(cls, d_in):
