@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 lg = logging.getLogger()
 # Setting up logger                                         logger                      -   ENDED   -
 
-lg.debug("START: {:>85} <<<".format('BitcoinNodeObject.py'))
+lg.info("START: {:>85} <<<".format('BitcoinNodeObject.py'))
 
 
 class Node(object):
@@ -49,7 +49,7 @@ class Node(object):
         self.features: (dict, None)             = None
         self.desc: (str, None)                  = None
 
-        lg.debug("instant.ed: {}".format(self.ccn))
+        lg.debug("instant.ed:                                   < {:>20} > - ({})".format(self.alias, self.ccn))
     
     def reset_sensitive_data(self):
         """=== Instance method =========================================================================================
@@ -84,13 +84,24 @@ class Node(object):
         """=== Instance method =========================================================================================
         Returning if object is possibly valid
         ========================================================================================== by Sziller ==="""
-        if all([self.rpc_ip, self.rpc_user, self.rpc_password, self.rpc_port, self.is_rpc]):
-            return True
-        elif (self.is_rpc is False) and self.ext_node_url:
+        lg.info(f"validating: Node with alias:                  < {self.alias:>20} >")
+        if self.is_rpc:
+            # Check if all RPC-related variables are present
+            if all([self.rpc_ip, self.rpc_user, self.rpc_password, self.rpc_port]):
+                lg.debug(f"valid RPC : Node with alias:                  < {self.alias:>20} >")
+                return True
+            else:
+                lg.warning(f"invalid   : Missing RPC data Node with alias: < {self.alias:>20} > - "
+                           f"Skipping this node.")
+                return False
+        # If the node is not an RPC node, check for ext_node_url (API node)
+        elif self.ext_node_url:
+            lg.debug(f"valid API : Node with alias:                  < {self.alias:>20} >")
             return True
         else:
+            lg.warning(f"invalid   : Missing API data Node with alias: < {self.alias:>20} > - "
+                       f"Skipping this node.")
             return False
-            
         
     @classmethod
     def construct(cls, d_in):

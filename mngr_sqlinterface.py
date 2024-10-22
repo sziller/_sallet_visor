@@ -17,18 +17,14 @@ if __name__ == "__main__":
     
     load_dotenv()
     keys_to_add = \
-        [{"alias": 'pesz',              "owner": "MuranyiArpad",    "ip": "99.122.17.202",      "port": 8333,
-          "features": "nope",           "desc": "pesz gepe",        "is_rpc": False},
-         {"alias": 'main',          "owner": "sziller.eu",      "ip": "10.3.77.42",         "port": 8042,
-          "features": "nope",           "desc": "sajat nodeom",     "is_rpc": True},
-         {"alias": 'kraken',            "owner": "kraken.com",      "ip": "198.210.44.74",      "port": 8333,
-          "features": "extra",          "desc": "nagy meno node",   "is_rpc": False},
-         {"alias": 'side',      "owner": "jenoe",           "ip": "100.100.100.100",    "port": 4242,
-          "features": "nope",           "desc": "jencie",           "is_rpc": False},
-         {"alias": 'jenoe02',      "owner": "jenoe",           "ip": "100.100.100.103",    "port": 4242,
-          "features": "nopoe",          "desc": "jenci cucca 2",    "is_rpc": False},
-         {"alias": 'blockchain.info',   "owner": "bc",              "ip": "20.40.60.80",        "port": 0,
-          "features": "extra",          "desc": "kulso infoforras", "is_rpc": False},
+        [{"alias": 'main', "owner": "sziller.eu", "features": "nope", "is_rpc": True,
+          'ip': '0.0.0.0', 'port': 0, "desc": "sajat nodeom"},
+         {"alias": 'backup', "owner": "sziller.eu", "features": "nope", "is_rpc": True,
+          'ip': '0.0.0.0', 'port': 0, "desc": "masodlagos node"},
+         {"alias": 'xxx.info', "owner": "xxx.com", "features": "extra", "is_rpc": False,
+          'ip': '0.0.0.0', 'port': 0, "desc": "kulso infoforras masik"},
+         {"alias": 'blockchain.info', "owner": "blockchain.com", "features": "extra", "is_rpc": False,
+          'ip': '0.0.0.0', 'port': 0, "desc": "kulso infoforras"},
          ]
 
     session = SQLi.createSession(db_fullname=os.getenv("DB_PATH_VISOR"), style="SQLite", tables=[sqlNode.__table__])
@@ -37,6 +33,4 @@ if __name__ == "__main__":
     lg.info("function  : ADD_rows_to_table()")
     a = SQLi.ADD_rows_to_table(primary_key="alias", data_list=keys_to_add, row_obj=sqlNode, session=session)
     lg.info(a)
-    print(type(a))
-
     a = SQLi.QUERY_entire_table(session=session, row_obj=sqlNode.__table__, ordered_by=None)

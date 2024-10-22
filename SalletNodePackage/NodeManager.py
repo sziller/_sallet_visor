@@ -1,4 +1,4 @@
-""" 
+"""
 Sallet univers' node manager
 by Sziller
 """
@@ -6,16 +6,22 @@ by Sziller
 import os
 import inspect
 import logging
+from typing import Optional
 from dotenv import load_dotenv
 from sql_access import sql_interface as sqla
 from sql_bases.sqlbase_node.sqlbase_node import Node as sqlNode
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import declarative_base
 from SalletNodePackage.BitcoinNodeObject import Node
-lg = logging.getLogger(__name__)
-lg.info("START     : {:>85} <<<".format('NodeManager.py'))
 
 Base = declarative_base()
+
+# Setting up logger                                         logger                      -   START   -
+lg = logging.getLogger()
+# Setting up logger                                         logger                      -   ENDED   -
+
+lg.info("START     : {:>85} <<<".format('NodeManager.py'))
+
 
 class NODEManager:
     """=== Classname: UTXOManager ======================================================================================
@@ -25,16 +31,21 @@ class NODEManager:
 
     def __init__(self,
                  dotenv_path="./.env",
-                 row_obj: (Base, None) = None,
-                 session_in: (Session, None) = None):
+                 row_obj: Optional[Base] = None,
+                 session_in: Optional[Session] = None):
         lg.info("__init__  : {:>60}".format(self.ccn))
-        self.dotenv_path: str               = dotenv_path
-        load_dotenv(dotenv_path=dotenv_path)
-        self.row_obj: (Base, None)          = row_obj
-        self.session_in: (Session, None)    = session_in
-        self.node_obj_dict: (dict, None)    = None  # {alias1: node_obj1, alias2: node_obj2}
-        # ------------------------------------------------
-        self.active_alias: (str, None)      = None
+        self.dotenv_path: str                   = dotenv_path
+        self.row_obj: Optional[Base]            = row_obj
+        self.session_in: Optional[Session]      = session_in
+        # -------------------------------------------------------------------
+        self.node_obj_dict: Optional[dict]      = None
+        self.active_alias: Optional[str]        = None
+        # -------------------------------------------------------------------
+        try:
+            load_dotenv(dotenv_path=dotenv_path)
+        except Exception as e:
+            lg.error(f"dotenv    : Error loading .env file:\n{e}")
+            raise
     
     def read_db(self):
         """=== Method name: read_db ====================================================================================
@@ -63,6 +74,7 @@ class NODEManager:
     def return_next_node_instance(self):
         """=== Instance method =========================================================================================
         ========================================================================================== by Sziller ==="""
+        active_Node = None
         valid = False
         while not valid:
             # Dynamically get the list of keys
@@ -92,28 +104,4 @@ class NODEManager:
             if active_Node.is_valid():
                 valid = True
         return active_Node
-    
-    
-if __name__ == "__main__":
-    load_dotenv()
-    session_test = sqla.createSession(db_fullname="../{}".format(os.getenv("DB_PATH_VISOR")),
-                                      style=os.getenv("DB_STYLE_VISOR"),
-                                      tables=None)
-    mngr = NODEManager(session_in=session_test, row_obj=sqlNode.__table__)
-    print(mngr.read_db())
-    mngr.get_key_guided_rowdict()
-    print("---------------------------")
-    for key, value in mngr.node_obj_dict.items():
-        print(f"{key}: {value}")
-    
-    for n in range(10):
-        print("-------------------------------------------------")
-        _next = mngr.return_next_node_instance()
-        print(_next.is_rpc)
-        print(_next.alias)
-        print(_next.rpc_ip)
-        print(_next.rpc_port)
-        print(_next.rpc_user)
-        print(_next.rpc_password)
-        print(_next.ext_node_url)
     
