@@ -403,18 +403,6 @@ class Node(object):
             except Exception as e:
                 lg.error(f"Failed to scan UTXO set: {e}", exc_info=True)
                 raise Exception(f"Failed to complete UTXO scan: {e}")
-            # serverURL = self.rpc_url()
-            # OneReq = RPCHost.RPCHost(url=serverURL)
-            # 
-            # if OneReq.call(command, 'status'):
-            #     lg.warning("aborting  : UtxoSet scan still active - trying to shoot down")
-            #     OneReq.call(command, 'abort')
-            #     
-            # lg.warning("running...: UtxoSet scan might take several minutes... be patient!")
-            # resp = OneReq.call(command, 'start', formatted_list)
-            # lg.info("returned  : UtxoSet scan result!")
-            # lg.info("    {}".format(resp))
-            # return resp
         else:
             msg = "Method only usable as RPC call - says {} at {}".format(cmn, self.ccn)
             lg.error(msg, exc_info=True)
@@ -448,11 +436,3 @@ class Node(object):
             lg.error(f"{cmn}: Failed to get confirmations - {e}", exc_info=False)
             return 0
 
-
-if __name__ == "__main__":
-    # instead of locally testing behaviour manually, we use the mngr_* files for manual testing in order to keep
-    # namespace in root directory.
-    # Refer to: mngr_bitcoinnodeobject.py
-    pass
-
-    
