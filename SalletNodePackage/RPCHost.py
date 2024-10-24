@@ -14,7 +14,12 @@ lg.info("START: {:>83} <<<".format("RPCHost.py"))
 
 class RPCHost(object):
     """=== Class name: RPCHost =========================================================================================
-    Object translates calls into RPC commands to an address
+    Object translates calls into RPC commands to an address.
+    Initializes the RPCHost object, setting up the session, URL, and configurable retry parameters.
+    :param url: str - The URL of the node to which RPC calls will be sent.
+    :param retries: int - Number of retry attempts in case of connection failure (default is 10).
+    :param sleep_time: float - Sleep time (in seconds) between retry attempts (default is 0.5).
+    :param timeout: int - The timeout duration (in seconds) for each RPC call (default is 10).
     ========================================================================= by Sziller & internet & ChatGPT ==="""
     ccn = inspect.currentframe().f_code.co_name  # current class name
     
@@ -30,7 +35,12 @@ class RPCHost(object):
 
     def call(self, rpc_method, *params, timeout: (int, None) = None):
         """=== Instance method =========================================================================================
-        Method performs the actual calling of the RPC
+        Performs the actual RPC call to the node using the specified method and parameters.
+        :param rpc_method: str - The name of the RPC method to be invoked.
+        :param params: tuple - Additional parameters to be passed to the RPC method.
+        :param timeout: Optional[int] - The timeout for the call (uses the default timeout if not provided).
+        :return: dict - The result of the RPC call as a JSON object.
+        :raises: Exception - If the RPC connection fails or returns an error response.
         ========================================================================================== by Sziller ==="""
         payload = json.dumps({"method": rpc_method, "params": list(params), "jsonrpc": "2.0"})
         hadconnectionfailures = False

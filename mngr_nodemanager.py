@@ -37,7 +37,7 @@ if __name__ == "__main__":
     session_test = sqla.createSession(db_fullname="./{}".format(os.getenv("DB_PATH_VISOR")),
                                       style=os.getenv("DB_STYLE_VISOR"),
                                       tables=None)
-    mngr = NODEManager(session_in=session_test, row_obj=sqlNode.__table__)
+    mngr = NODEManager(session_in=session_test, row_obj=sqlNode.__table__, dotenv_path='./.env')
     print(mngr.read_db())
     mngr.get_key_guided_rowdict()
     print("---------------------------")
@@ -45,12 +45,19 @@ if __name__ == "__main__":
         print(f"{key}: {value}")
 
     for n in range(10):
-        print("-------------------------------------------------")
+        print("======================================== <-- new Node")
         _next = mngr.return_next_node_instance()
-        print(_next.is_rpc)
-        print(_next.alias)
-        print(_next.rpc_ip)
-        print(_next.rpc_port)
-        print(_next.rpc_user)
-        print(_next.rpc_password)
-        print(_next.ext_node_url)
+        print("is RPC   :{:>30}".format(_next.is_rpc))
+        print("ALIAS    :{:>30}".format(_next.alias))
+        if _next.is_rpc:
+            print("ip       :{:>30}".format(_next.rpc_ip))
+            print("port     :{:>30}".format(_next.rpc_port))
+            print("user     :{:>30}".format(_next.rpc_user))
+            print("pssw     :{:>30}".format(_next.rpc_password))
+        else:
+            print("URL      :{:>30}".format(_next.ext_node_url))
+        print("----------------------------------------")
+        print("owner    :{:>30}".format(_next.owner))
+        print("features :{:>30}".format(_next.features))
+        print("desc     :{:>30}".format(_next.desc))
+        

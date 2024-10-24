@@ -27,7 +27,8 @@ if __name__ == "__main__":
           'ip': '0.0.0.0', 'port': 0, "desc": "kulso infoforras"},
          ]
 
-    session = SQLi.createSession(db_fullname=os.getenv("DB_PATH_VISOR"), style="SQLite", tables=[sqlNode.__table__])
+    session = SQLi.createSession(db_fullname=os.getenv("DB_PATH_VISOR"), style=os.getenv("DB_STYLE_VISOR"),
+                                 tables=[sqlNode.__table__])
     lg.info("session   : created")
 
     lg.info("function  : ADD_rows_to_table()")

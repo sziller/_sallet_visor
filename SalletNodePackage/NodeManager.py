@@ -25,8 +25,11 @@ lg.info("START     : {:>85} <<<".format('NodeManager.py'))
 
 class NODEManager:
     """=== Classname: UTXOManager ======================================================================================
-        Object manages custom made wallet's utxo related tasks, processes.
-        ============================================================================================== by Sziller ==="""
+    Object manages custom made wallet's utxo related tasks, processes.
+    :param dotenv_path: str - Path to the .env file used to load environmental variables.
+    :param row_obj: Optional[Base] - Optional SQLAlchemy row object for database interaction.
+    :param session_in: Optional[Session] - Optional SQLAlchemy session for database interaction.
+    ============================================================================================== by Sziller ==="""
     ccn = inspect.currentframe().f_code.co_name  # current class name
 
     def __init__(self,
@@ -47,9 +50,10 @@ class NODEManager:
             lg.error(f"dotenv    : Error loading .env file:\n{e}")
             raise
     
-    def read_db(self):
-        """=== Method name: read_db ====================================================================================
-        Method reads in UTXO set from yaml file.
+    def read_db(self) -> list:
+        """=== Instance method =========================================================================================
+        Method reads in UTXO set from the database using SQLAlchemy.
+        :return: list - A list of UTXO rows from the database, ordered by 'alias'.
         ========================================================================================== by Sziller ==="""
         node_list = sqla.QUERY_entire_table(session=self.session_in,
                                             row_obj=self.row_obj,
@@ -57,15 +61,18 @@ class NODEManager:
         return node_list
     
     @staticmethod
-    def get_primary_key_column_name():
-        """=== Instance method =========================================================================================
+    def get_primary_key_column_name() -> str:
+        """=== Static method ===========================================================================================
+        Retrieves the primary key column name from the `sqlNode` table.
+        :return: str - The name of the primary key column.
         ========================================================================================== by Sziller ==="""
         primary_keys = [key.name for key in sqlNode.__table__.columns if key.primary_key]
         return primary_keys[0]
 
     def get_key_guided_rowdict(self):
         """=== Instance method =========================================================================================
-        
+        Creates and sorts a dictionary based on the primary key of the UTXO rows.
+        The primary key is used as the key, and the row data (excluding the primary key) is stored as the value.
         ========================================================================================== by Sziller ==="""
         pk = self.get_primary_key_column_name()
         self.node_obj_dict =\
@@ -73,6 +80,9 @@ class NODEManager:
 
     def return_next_node_instance(self):
         """=== Instance method =========================================================================================
+        Iterates through the list of nodes and returns the next valid Node instance.
+        This method checks if the node is RPC or API-based and loads the sensitive data accordingly.
+        :return: Node - The next valid Node instance.
         ========================================================================================== by Sziller ==="""
         active_Node = None
         valid = False
@@ -102,6 +112,9 @@ class NODEManager:
                 active_Node.update_sensitive_data(
                     ext_node_url=os.getenv(api_node_var.format(self.active_alias.upper()) + "_URL"))
             if active_Node.is_valid():
+                active_Node.features   = self.node_obj_dict[self.active_alias]['features']
+                active_Node.owner      = self.node_obj_dict[self.active_alias]['owner']
+                active_Node.desc       = self.node_obj_dict[self.active_alias]['desc']
                 valid = True
         return active_Node
     

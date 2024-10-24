@@ -7,7 +7,7 @@ All actions here can either be:
 import os
 import logging
 import inspect
-import time
+from typing import Optional
 from bitcoinlib.transactions import Transaction as TXobj
 
 import requests as reqs
@@ -27,7 +27,8 @@ class Node(object):
     """=== Class name: Node ============================================================================================
     Data- and methodcollection of Nodes, your system is in contact with.
     Use an instance to handle all node related duties!
-    :param dotenv_path: str - path to your .env file
+    :param alias: str - the unique name we refer to the Node in our environment. Note: it is Case INSENSITIVE:
+                        so uniqueness must be kept regardless of casing.
     :param is_rpc: bool -   True:   if local RemoteProcedureCall is applied, thus LAN Fullnode is called
                                 False:  if remote API is contacted
     ============================================================================================== by Sziller ==="""
@@ -38,35 +39,47 @@ class Node(object):
                  is_rpc: bool):
         self.alias: str                         = alias
         self.is_rpc: bool                       = is_rpc
-        self.owner: (str, None)                 = None
+        self.owner: Optional[str]               = None
+        self.features: Optional[dict]           = None
+        self.desc: Optional[str]                = None
         # ------------------------------------------------------------------------------------------
-        self.rpc_ip: (str, None)                = None                # default: '127.0.0.1'
-        self.rpc_port: (int, None)              = None              # default: 8333
-        self.rpc_user: (str, None)              = None
-        self.rpc_password: (str, None)          = None
-        self.ext_node_url: (str, None)          = None
+        self.rpc_ip: Optional[str]              = None                # default: '127.0.0.1'
+        self.rpc_port: Optional[int]            = None              # default: 8333
+        self.rpc_user: Optional[str]            = None
+        self.rpc_password: Optional[str]        = None
+        self.ext_node_url: Optional[str]        = None
         # ------------------------------------------------------------------------------------------
-        self.features: (dict, None)             = None
-        self.desc: (str, None)                  = None
 
         lg.debug("instant.ed:                                   < {:>20} > - ({})".format(self.alias, self.ccn))
     
     def reset_sensitive_data(self):
         """=== Instance method =========================================================================================
         Clear sensitive data to avoid retaining old credentials.
+        :var self.rpc_ip: str - IP address of the node
+        :var self.rpc_port: int - Port for RPC communication
+        :var self.rpc_user: str - RPC username
+        :var self.rpc_password: str - RPC password
+        :var self.ext_node_url: str - External API URL for non-RPC nodes
         ========================================================================================== by Sziller ==="""
         self.rpc_ip                             = None
         self.rpc_port                           = None
         self.rpc_user                           = None
         self.rpc_password                       = None
         self.ext_node_url                       = None
-    
-        # lg.debug("instant.ed: {} - alias {} at {}. Address: {}:{} - RPC: {})"
-        #          .format(self.ccn, self.alias, self.owner, self.rpc_ip, self.rpc_port, self.is_rpc))
 
-    def update_sensitive_data(self, rpc_ip=None, rpc_port=None, rpc_user=None, rpc_password=None, ext_node_url=None):
+    def update_sensitive_data(self,
+                              rpc_ip: Optional[str] = None,
+                              rpc_port: Optional[int] = None,
+                              rpc_user: Optional[str] = None,
+                              rpc_password: Optional[str] = None,
+                              ext_node_url: Optional[str] = None):
         """=== Instance method =========================================================================================
         Update the sensitive data for the Node object. All of them at once!
+        :param rpc_ip: str or None - IP address of the node
+        :param rpc_port: int or None - Port for RPC communication
+        :param rpc_user: str or None - RPC username
+        :param rpc_password: str or None - RPC password
+        :param ext_node_url: str or None - External API URL for non-RPC nodes
         ========================================================================================== by Sziller ==="""
         self.rpc_ip                             = rpc_ip
         self.rpc_port                           = rpc_port
@@ -82,7 +95,8 @@ class Node(object):
     
     def is_valid(self):
         """=== Instance method =========================================================================================
-        Returning if object is possibly valid
+        Returns True if the Node object has valid configuration for either RPC or API connection.
+        :return: bool - True if the node is valid, False otherwise
         ========================================================================================== by Sziller ==="""
         lg.info(f"validating: Node with alias:                  < {self.alias:>20} >")
         if self.is_rpc:
@@ -105,16 +119,16 @@ class Node(object):
         
     @classmethod
     def construct(cls, d_in):
-        """=== Classmethod: construct ==================================================================================
-        Input necessary class parameters to instantiate object of the class!
-        @param d_in: dict - format data to instantiate new object
-        @return: an instance of the class
+        """=== Classmethod =============================================================================================
+        Instantiate a Node object using the provided dictionary.
+        :param d_in: dict - Dictionary containing parameters for object instantiation
+        :return: Node - Instance of the Node class
         ========================================================================================== by Sziller ==="""
         return cls(**d_in)
 
     @classmethod
     def construct_from_string(cls, str_in):
-        """=== Classmethod: construct ==================================================================================
+        """=== Classmethod =============================================================================================
         Input necessary class parameters to instantiate object of the class!
         @param str_in: str - format data to instantiate new object
         @return: an instance of the class
@@ -122,14 +136,14 @@ class Node(object):
         pass
 
     def rpc_url(self) -> str:
-        """=== Function name: rpc_url ==================================================================================
-        Function generates the RPC address from the sensitive data included in the instance.
-        :var self.rpc_user
-        :var self.rpc_password
-        :var self.rpc_ip
-        :var self.rpc_port
-        :return: str - of the address
-        ============================================================================================== by Sziller ==="""
+        """=== Instance method =========================================================================================
+        Generates the RPC URL from the stored sensitive data.
+        :var self.rpc_user: str - RPC username
+        :var self.rpc_password: str - RPC password
+        :var self.rpc_ip: str - IP address of the node
+        :var self.rpc_port: int - Port for RPC communication
+        :return: str - RPC URL formatted as 'http://<user>:<password>@<ip>:<port>'
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         # ATTENTION: local IP address MUST BE WHITELISTED on Bitcoin Node!
         if not all([self.rpc_ip, self.rpc_user, self.rpc_password, self.rpc_port]):
@@ -140,10 +154,11 @@ class Node(object):
         return "http://{}:{}@{}:{}".format(self.rpc_user, self.rpc_password, self.rpc_ip, self.rpc_port)
 
     def _make_rpc_call(self, command: str, *params):
-        """=== Instance method =========================================================================================
-        Helper method to make API calls to blockchain.info or similar services.
-        :param endpoint: str - the specific API endpoint to call
-        :return: json response from the external API
+        """=== Internal utility method =================================================================================
+        Makes an RPC call to the node using the stored RPC credentials.
+        :param command: str - The RPC method to call
+        :param params: tuple - Additional parameters for the RPC call
+        :return: json - JSON response from the node
         ========================================================================================== by Sziller ==="""
         if not self.is_rpc:
             raise Exception("RPC is required for this operation.")
@@ -151,10 +166,11 @@ class Node(object):
         return OneReq.call(command, *params)
 
     def _make_external_api_call(self, endpoint: str, expect_json: bool = True):
-        """=== Instance method =========================================================================================
-        Helper method to make API calls to blockchain.info or similar services.
-        :param endpoint: str - the specific API endpoint to call
-        :return: json response from the external API
+        """=== Internal utility method =================================================================================
+        Makes an API call to an external node (e.g., blockchain.info).
+        :param endpoint: str - API endpoint to call
+        :param expect_json: bool - Whether to expect a JSON response (default True)
+        :return: json or str - JSON response or raw text depending on the request
         ========================================================================================== by Sziller ==="""
         url = f"{self.ext_node_url}/{endpoint}"
         try:
@@ -171,13 +187,11 @@ class Node(object):
     
     def validate_api_url(self):
         """=== Instance method =========================================================================================
-        Check if the external API URL is reachable.
+        Validates that the external API URL is reachable.
         Raises an exception if the API is not reachable.
         ========================================================================================== by Sziller ==="""
-
         # Use a known good endpoint for testing, like 'q/getblockcount'
         test_endpoint = f"{self.ext_node_url}/q/getblockcount"
-        
         try:
             resp = reqs.get(test_endpoint, allow_redirects=True)
             resp.raise_for_status()  # Raises an exception for non-200 status codes
@@ -188,8 +202,8 @@ class Node(object):
     
     def nodeop_getconnectioncount(self):
         """=== Instance method =========================================================================================
-        Method returns the number of active connections of your Node. Only viable over RPC.
-        :return: number of active connections
+        Retrieves the number of active connections to the node. Only available for RPC nodes.
+        :return: int - Number of active connections
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         if self.is_rpc:
@@ -206,25 +220,30 @@ class Node(object):
 
     def nodeop_getblockhash(self, sequence_nr: int):
         """=== Instance method =========================================================================================
-        Method retrieves the block hash at a specific sequence number (height).
-        :param sequence_nr: int - the sequence number of the block
-        :return: block hash at the given sequence number
+        Retrieves the block hash at a specific block height.
+        :param sequence_nr: int - The block height (sequence number)
+        :return: str - The block hash at the given height
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblockhash"
         lg.debug("running   : {}".format(cmn))
         if self.is_rpc:
             resp = self._make_rpc_call(command, sequence_nr)
+            lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
+            lg.debug("exit      : {}".format(cmn))
+            return resp
         else:
-            endpoint = f"q/{command}/{sequence_nr}"
-            resp = self._make_external_api_call(endpoint)
-        lg.debug("returning : {:<30} - {:>20}: {:>8}".format(cmn, command, resp))
-        lg.debug("exit      : {}".format(cmn))
-        return resp
+            msg = "Method only usable as RPC call - says {} at {}".format(cmn, self.ccn)
+            lg.error(msg, exc_info=True)
+            # endpoint = f"q/{command}/{sequence_nr}"
+            # resp = self._make_external_api_call(endpoint)
+            return False
+        
 
     def nodeop_getblockcount(self):
         """=== Instance method =========================================================================================
-        Node operation returns height of newest block available at current time.
+        Retrieves the total number of blocks in the blockchain.
+        :return: int - The current block count
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblockcount"
@@ -240,9 +259,9 @@ class Node(object):
         
     def nodeop_getblock(self, block_hash: str):
         """=== Instance method =========================================================================================
-        Method retrieves block information for a given block hash.
-        :param block_hash: str - the block hash to retrieve
-        :return: block details for the given hash
+        Retrieves detailed information about a specific block by its hash.
+        :param block_hash: str - The block hash to retrieve
+        :return: dict - Details of the block
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getblock"
@@ -255,13 +274,13 @@ class Node(object):
         lg.debug("exiting   : {}".format(cmn))
         return resp
 
-    def check_tx_confirmation(self, tx_hash: str, limit: int = 6) -> bool:
+    def nodeop_check_tx_confirmation(self, tx_hash: str, limit: int = 6) -> bool:
         """=== Instance method =========================================================================================
-        Function checks if entered Transaction (by hash) had been confirmed according to limit entered.
-        @param tx_hash: str - hxstr of the transaction's hash (or ID)
-        @param limit: int - number of miniml confirmations necessary to be considered CONFIRMED by local system
-        @return bool - True TX can be considered CONFIRMED (depth is arrived) False if TX not CONFIRMED yet.
-        ============================================================================================== by Sziller ==="""
+        Checks if a transaction has reached the required number of confirmations.
+        :param tx_hash: str - The transaction hash
+        :param limit: int - Minimum number of confirmations to be considered confirmed (default 6)
+        :return: bool - True if the transaction is confirmed, False otherwise
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         try:
             count = self.nodeop_confirmations(tx_hash=tx_hash)
@@ -275,11 +294,10 @@ class Node(object):
 
     def nodeop_publish_tx(self, tx_raw: str) -> bool:
         """=== Instance method =========================================================================================
-        @param tx_raw: str - hxstr format of the serialized Bitcoin transaction.
-        @return: bool - True TX was published False if not.
-                        If False is returned, you should take action.
-                        For RPC calls successfull broadcast returns the Transaction ID
-        ============================================================================================== by Sziller ==="""
+        Publishes a raw transaction to the network.
+        :param tx_raw: str - The raw transaction in hexadecimal format
+        :return: bool - True if the transaction was successfully published, False otherwise
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         lg.debug("Node requ.: {:>16} - publish attempt...".format({True: "OWN NODE",
                                                                   False: "blockchain.info"}[self.is_rpc]))
@@ -304,11 +322,11 @@ class Node(object):
 
     def nodeop_getrawtransaction(self, tx_hash: str, verbose: bool = False):
         """=== Instance method =========================================================================================
-        Method retrieves raw transaction details by TX hash.
-        :param tx_hash: str - the transaction hash (ID)
-        :param verbose: int - verbosity level (0 or 1)
-        :return: transaction details or raw hex, depending on verbosity
-        ============================================================================================== by Sziller ==="""
+        Retrieves raw transaction details by transaction hash.
+        :param tx_hash: str - The transaction hash (ID)
+        :param verbose: bool - If True, returns detailed JSON; if False, returns raw hex (default False)
+        :return: dict or str - Transaction details (JSON) or raw hex string
+        ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "getrawtransaction"
         lg.debug("running   : {}".format(cmn))
@@ -339,9 +357,9 @@ class Node(object):
 
     def nodeop_get_tx_outpoint_value(self, tx_outpoint: UtxoId) -> int:
         """=== Instance method =========================================================================================
-        Method retrieves the value of a specific TX outpoint (UTXO).
-        :param tx_outpoint: UtxoId - the UTXO outpoint to get the value for
-        :return: int - value of the UTXO
+        Retrieves the value of a specific transaction outpoint (UTXO).
+        :param tx_outpoint: UtxoId - The UTXO outpoint to get the value for
+        :return: int - The value of the UTXO
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         lg.debug("running   : {}".format(cmn))
@@ -374,10 +392,9 @@ class Node(object):
 
     def nodeop_get_utxo_set_by_addresslist(self, address_list) -> dict:
         """=== Instance method =========================================================================================
-        Method searches through local UtxoSet and returns those Utxo-s, referring to addresses shown in <address_list>.
-        Data is returned as answered by the Node
-        :param address_list: list - or addresses in Base58 format
-        :return: dict - of Utxo data referring to addresses in question
+        Scans the UTXO set for all UTXOs associated with a list of addresses.
+        :param address_list: list - List of addresses in Base58 format
+        :return: dict - UTXO data for the provided addresses
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         if self.is_rpc:
@@ -410,9 +427,9 @@ class Node(object):
     
     def nodeop_confirmations(self, tx_hash: str) -> int:
         """=== Instance method =========================================================================================
-        Read and return number of blocks passed since Transaction was confirmed.
-        @param tx_hash: str - hxstr format of the transaction ID
-        @return: int - number of confirmations
+        Retrieves the number of confirmations for a specific transaction.
+        :param tx_hash: str - The transaction hash (ID)
+        :return: int - The number of confirmations
         ========================================================================================== by Sziller ==="""
         cmn = inspect.currentframe().f_code.co_name  # current method name
         command = "confirmations"
@@ -435,4 +452,3 @@ class Node(object):
         except Exception as e:
             lg.error(f"{cmn}: Failed to get confirmations - {e}", exc_info=False)
             return 0
-

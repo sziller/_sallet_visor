@@ -31,13 +31,13 @@ if __name__ == "__main__":
     lg.info("========================================================================================")
     
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
 
     node = Node(is_rpc=False, alias="blockchain.info")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
         
     node.validate_api_url()
 
@@ -63,10 +63,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getconnectioncount - RPC                                                    ===")
     lg.info("==========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
     
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getconnectioncount'))
     try:
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getconnectioncount - API                                                    ===")
     lg.info("==========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
     
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getconnectioncount'))
     try:
@@ -90,10 +90,10 @@ if __name__ == "__main__":
     lg.info("=== showing actual BLOCKHEIGHT - RPC - real time:                                      ===")
     lg.info("==========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
 
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getblockcount'))
     try:
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     lg.info("=== showing actual BLOCKHEIGHT - API - real time:                                      ===")
     lg.info("==========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
     
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getblockcount'))
     try:
@@ -117,10 +117,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getrawtransaction - RPC, hex, unparsed                                    ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
 
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getrawtransaction - API, hex, unparsed                                    ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=False)
@@ -145,10 +145,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getrawtransaction - RPC, hex, parsed by bitcoinlib:                       ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
     # -------------------------------------------------------------------------------------------------
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getrawtransaction - API, hex, parsed by bitcoinlib:")
     lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
     # -------------------------------------------------------------------------------------------------
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
@@ -179,10 +179,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getrawtransaction - RCP, dict, parsed by Node                             ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
         tx_data = node.nodeop_getrawtransaction(tx_hash=txid, verbose=True)
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_getrawtransaction - API, dict, parsed by blockchain.info:                ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
     # -------------------------------------------------------------------------------------------------
     lg.info("TESTING   : {:>80} <<<".format('nodeop_getrawtransaction'))
     try:
@@ -211,10 +211,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_get_tx_outpoint_value - RPC                                               ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
 
     op_id = UtxoId.construct(
         {"txid": '7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741',
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_get_tx_outpoint_value - API                                               ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
 
     op_id = UtxoId.construct(
         {"txid": '7c22da907dbf509b5f60c8b60c8baa68423b9023b99cd5701dfb1a592ffa5741',
@@ -247,10 +247,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_confirmations - RPC                                                       ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
 
     lg.info("TESTING   : {:>80} <<<".format('nodeop_confirmations'))
     try:
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_confirmations - API                                                       ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
 
     lg.info("TESTING   : {:>80} <<<".format('nodeop_confirmations'))
     try:
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     lg.info("=== nodeop_get_utxo_set_by_addresslist - API (not allowed)                           ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=False, alias="sziller")
-    node.update_sensitive_data(ext_node_url=os.getenv("API_01_URL"))
+    node.update_sensitive_data(ext_node_url=os.getenv("API_BC_BLOCKCHAIN.INFO_URL"))
 
     lg.info("TESTING   : {:>80} <<<".format('nodeop_get_utxo_set_by_addresslist'))
     addresslist = eval(os.getenv("ADDRESSES"))
@@ -290,10 +290,10 @@ if __name__ == "__main__":
     lg.info("=== nodeop_get_utxo_set_by_addresslist - RPC (only)                                  ===")
     lg.info("========================================================================================")
     node = Node(is_rpc=True, alias="sziller")
-    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_01_IP"),
-                               rpc_port=os.getenv("RPC_BC_01_PORT"),
-                               rpc_user=os.getenv("RPC_BC_01_USER"),
-                               rpc_password=os.getenv("RPC_BC_01_PSSW"))
+    node.update_sensitive_data(rpc_ip=os.getenv("RPC_BC_MAIN_IP"),
+                               rpc_port=os.getenv("RPC_BC_MAIN_PORT"),
+                               rpc_user=os.getenv("RPC_BC_MAIN_USER"),
+                               rpc_password=os.getenv("RPC_BC_MAIN_PSSW"))
 
     lg.info("TESTING   : {:>80} <<<".format('nodeop_get_utxo_set_by_addresslist'))
     addresslist = eval(os.getenv("ADDRESSES"))
