@@ -7,9 +7,13 @@ import os
 import yaml
 import logging
 import inspect
+import importlib
+from typing import Optional
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
 from SalletBasePackage import models
-from SalletSqlPackage import SQL_interface as sqla
+from sql_access import sql_interface as sqla
+from sql_bases.sqlbase_utxo.sqlbase_utxo import Utxo as sqlUtxo
 from SalletBasePackage import units
 from SalletNodePackage import BitcoinNodeObject as BtcNode
 
@@ -30,16 +34,24 @@ class UTXOManager:
     # Current Class Name
     ccn = inspect.currentframe().f_code.co_name  # current class name
     
-    def __init__(self, node: BtcNode or None = None, dotenv_path="./.env", session_in=False):
+    def __init__(self,
+                 node: BtcNode or None = None, 
+                 dotenv_path="./.env",
+                 session_in: Optional[Session] = None):
         lg.info("__init__  : {:>60}".format(self.ccn))
         self.node: (BtcNode, None)          = node
         self.dotenv_path: str               = dotenv_path
         load_dotenv(dotenv_path=self.dotenv_path)
         self.unit_used: str                 = os.getenv("UNIT_USE")
+        # ----------------------------------------------------------------------------  customizable import START   -
+        self.uxto_Base_obj_name: str        = os.getenv("DB_ID_TABLE_UTXO")
+        self.utxo_Base_obj = getattr(importlib.import_module("sql_bases.sqlbase_utxo.sqlbase_utxo"),
+                                     self.uxto_Base_obj_name).__table__
+        # ----------------------------------------------------------------------------  customizable import ENDED   -
         if not session_in:
-            self.session                    = sqla.createSession(db_path=os.getenv("DB_PATH_UTXO"),
+            self.session                    = sqla.createSession(db_fullname=os.getenv("DB_PATH_UTXO"),
                                                                  style=os.getenv("DB_STYLE_UTXO"),
-                                                                 tables=[sqla.Utxo.__table__])
+                                                                 tables=[self.utxo_Base_obj])
         else:
             self.session                    = session_in
         self.utxo_obj_dict: dict            = {}  # dict of all utxo objects
@@ -311,8 +323,8 @@ class UTXOManager:
         Method reads in UTXO set from yaml file.
         ========================================================================================== by Sziller ==="""
         return sqla.QUERY_entire_table(ordered_by="addresses",
-                                       db_table=os.getenv("DB_ID_TABLE_UTXO"),
-                                       session_in=self.session)
+                                       row_obj=self.utxo_Base_obj,
+                                       session=self.session)
     
     # ---------------------------------------------------------------------------------------------------
     # - Collection of DATA handling scripts - simple methods                            -   ENDED       -

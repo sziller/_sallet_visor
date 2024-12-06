@@ -17,7 +17,7 @@ from kivy.graphics.texture import Texture
 
 from SalletAppPackage.WidgetClasses import *
 from SalletBasePackage import models
-from SalletSqlPackage import SQL_interface as sql
+from sql_access import sql_interface as sql
 from SalletVisorPackage import UtxoManager as UtxoMan
 from SalletBasePackage import units
 from DataVisualizer.data2str import rdf
@@ -699,7 +699,7 @@ class SalletVISOR(App):
         self.title: str = "Sallet - Visor: your transaction handler"
         self.balance_onchain_sats: int = 0
         # --- Database settings ---------------------------------------------   - Database settings -   START   -
-        self.db_session = sql.createSession(db_path=os.getenv("DB_PATH_VISOR"),
+        self.db_session = sql.createSession(db_fullname=os.getenv("DB_PATH_VISOR"),
                                             style=os.getenv("DB_STYLE_VISOR"))
         # --- Database settings ---------------------------------------------   - Database settings -   ENDED   -
 
@@ -752,7 +752,7 @@ class SalletVISOR(App):
         self.root.ids.screen_intro.ids.oparea_intro.ids.lbl_welcome_intro.text = WELCOME_TXT
         # --- Filling in large text-fields of Labels                                            ENDED   -
         # --- Setting default Node                                                              START   -
-        self.actual_node_object = BtcNode.Node(alias= "", is_rpc=True, dotenv_path=self.dotenv_path)
+        self.actual_node_object = BtcNode.Node(alias="", is_rpc=True)
         # --- Setting default Node                                                              ENDED   -
 
         

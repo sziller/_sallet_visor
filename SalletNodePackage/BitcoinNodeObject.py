@@ -7,6 +7,7 @@ All actions here can either be:
 import os
 import logging
 import inspect
+import time
 from typing import Optional
 from bitcoinlib.transactions import Transaction as TXobj
 
@@ -49,6 +50,8 @@ class Node(object):
         self.rpc_password: Optional[str]        = None
         self.ext_node_url: Optional[str]        = None
         # ------------------------------------------------------------------------------------------
+        self._MAX_RETRIES: int                  = 5
+        self._WAIT_TIME_SECONDS: int            = 2
 
         lg.debug("instant.ed:                                   < {:>20} > - ({})".format(self.alias, self.ccn))
     
@@ -239,7 +242,6 @@ class Node(object):
             # resp = self._make_external_api_call(endpoint)
             return False
         
-
     def nodeop_getblockcount(self):
         """=== Instance method =========================================================================================
         Retrieves the total number of blocks in the blockchain.
@@ -403,12 +405,16 @@ class Node(object):
             formatted_list = ['addr({})'.format(_) for _ in address_list]  # syntax used by BitcoinCore
             lg.debug("converted : list to BitcoinCore request format for command: '{}'".format(command))
 
-            # Abort if a scan is already in progress
-            if self._make_rpc_call(command, 'status'):
-                lg.warning("aborting  : UtxoSet scan still active - trying to shoot down")
-                self._make_rpc_call(command, 'abort')
+            # Abort if a scan is already in progress, and cannot be stopped
+            try:
+                # Use the hidden static method to handle the retry logic
+                self._retry_abort_scan(command)
 
-            lg.warning("running...: UtxoSet scan might take several minutes... be patient!")
+                # Proceed with initiating a new scan
+                lg.warning("Running: UTXO set scan might take several minutes... please be patient!")
+            except Exception as e:
+                lg.error(f"Error while managing UTXO scan: {e}")
+                raise
 
             try:
                 # Start the scan with the formatted address list
@@ -452,3 +458,44 @@ class Node(object):
         except Exception as e:
             lg.error(f"{cmn}: Failed to get confirmations - {e}", exc_info=False)
             return 0
+
+    def _retry_abort_scan(self, command):
+        """
+        A hidden static method to handle retries for aborting a UTXO scan.
+        """
+        retries = 0
+        while mark := self._make_rpc_call(command, 'status'):
+            print(f"mark: {mark}")
+            if retries >= self._MAX_RETRIES:
+                lg.error("Exceeded maximum retries to abort the UTXO set scan. Exiting...")
+                raise RuntimeError("Unable to terminate the active UTXO set scan after retries.")
+
+            # Attempt to abort the scan
+            lg.warning(
+                f"Retry {retries + 1}/{self._MAX_RETRIES}: UTXO set scan still active - attempting to abort.")
+            self._make_rpc_call(command, 'abort')
+
+            # Wait before the next retry
+            lg.warning(f"Waiting: {self._WAIT_TIME_SECONDS} seconds before retrying...")
+            for remaining in range(self._WAIT_TIME_SECONDS, 0, -1):
+                time.sleep(1)
+                print(f"Waiting: {remaining} seconds remaining.")
+                lg.debug(f"Waiting: {remaining} seconds remaining.")
+
+            retries += 1
+        print(f"mark: {mark}")
+
+        # Additional post-abort status validation
+        lg.warning("Scan aborted. Verifying that the status has cleared...")
+        for attempt in range(self._MAX_RETRIES):
+            status = self._make_rpc_call(command, 'status')
+            print(f"status: {status}")
+            if not status:  # If the status is cleared, break the loop
+                lg.info("Scan status successfully cleared.")
+                break
+            lg.debug(f"Status still not cleared. Attempt {attempt + 1}/{self._MAX_RETRIES}. Waiting...")
+            time.sleep(self._WAIT_TIME_SECONDS)
+        else:
+            lg.error("Unable to verify that the scan status has cleared after abort.")
+            raise RuntimeError("Node still reports an active scan even after abort attempts.")
+        print(f"status: {status}")

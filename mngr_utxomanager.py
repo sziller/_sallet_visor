@@ -25,18 +25,35 @@ if __name__ == "__main__":
     lg.warning("========================================================================================")
     lg.warning("=== mngr_utxomanager                                                                 ===")
     lg.warning("========================================================================================")
-
-    node = BtcNode(alias="sziller", is_rpc=True)
-    mngr = utxomngr(node=node, dotenv_path="./.env")
+    
+    is_rpc = True
+    active_Node = BtcNode(alias="sziller", is_rpc=is_rpc)
+    if is_rpc:
+        active_Node.update_sensitive_data(
+            rpc_ip="10.3.77.37",
+            rpc_port=8332,
+            rpc_user="sziller",
+            rpc_password="lwslabsffts")
+    else:
+        pass
+        # active_Node.update_sensitive_data(
+        #     ext_node_url=os.getenv(api_node_var.format(self.active_alias.upper()) + "_URL"))
+    
+    mngr = utxomngr(node=active_Node, dotenv_path="./.env")
     
     from dotenv import load_dotenv
     load_dotenv()
     addresslist = eval(os.getenv("ADDRESSES"))
-    print(addresslist)
-    print(type(addresslist))
     
     # -------------------------------------------------------------------------------------------------------
     # - Testing: UTXOManager                                                                    -   START   -
     # -------------------------------------------------------------------------------------------------------
 
-    lg.info(mngr.task_return_utxo_set_by_addresslist(address_list=addresslist))
+    # lg.info(mngr.task_return_utxo_set_by_addresslist(address_list=addresslist))
+    # print(mngr.task_update_int_utxo_set_by_db(unit_src="sat"))
+    mngr.task_update_int_utxo_set_by_db(unit_src="btc")
+    detailed_balance = mngr.return_balance_by_addresslist(addresses=addresslist)
+    full_balance = mngr.return_total_balance()
+    for addr, balance in detailed_balance.items():
+        lg.info(f"{addr}: {balance}")
+    lg.warning(f"TOTAL     : {full_balance}")
